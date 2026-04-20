@@ -104,6 +104,9 @@ Con las respuestas:
 | Accesibilidad | `role-accessibility/SKILL.md` | WCAG 2.2, ARIA, teclado, lectores de pantalla |
 | Diseño Responsable | `role-responsible-design/SKILL.md` | Dark patterns, IA ética, privacidad en UX |
 | Code Review | `role-code-review/SKILL.md` | Revisar código existente |
+| SOLID / Clean Code | `role-solid/SKILL.md` | SOLID, DRY/KISS/YAGNI, design patterns, code smells |
+| App Performance | `role-app-performance/SKILL.md` | Profiling, Big O, caché, indexing, memory, pooling |
+| Concurrencia | `role-concurrency/SKILL.md` | Async/await, goroutines, race conditions, deadlocks |
 | Seguridad | `role-security/SKILL.md` | Authn, authz, datos sensibles |
 | Testing | `role-testing/SKILL.md` | Estrategia de tests |
 | CI/CD | `role-cicd/SKILL.md` | Pipeline / deploy |
@@ -252,6 +255,14 @@ tests/
 - ❌ Avanzar una fase sin confirmación explícita
 - ❌ Asumir el stack o la estructura sin preguntar
 - ❌ Implementar más de lo que piden las tasks confirmadas
+
+---
+
+## Comandos adicionales
+
+| Comando | Qué hace |
+|---------|----------|
+| `/gc` | Guardar sesión en Engram y compactar contexto — usarlo cuando el contexto acumula ruido |
 
 ---
 

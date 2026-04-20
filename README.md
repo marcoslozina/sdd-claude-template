@@ -73,6 +73,9 @@ El asistente no avanza una fase sin tu confirmación. Ante cada decisión de arq
 | `role-backend` | REST, paginación cursor/offset, N+1, manejo de errores, HTTP semántico |
 | `role-frontend` | React, Container/Presentational, estado, a11y, performance |
 | `role-code-review` | Checklist por capa, OWASP, privacidad, señales de mal diseño |
+| `role-solid` | SOLID, DRY/KISS/YAGNI, design patterns, code smells, complejidad ciclomática |
+| `role-app-performance` | Profiling, Big O, caché, indexing, connection pooling, memory management |
+| `role-concurrency` | Async/await por lenguaje, goroutines, race conditions, deadlocks, worker pools |
 
 ### UX/UI y diseño responsable
 
@@ -161,6 +164,7 @@ Orchestrator  (contexto mínimo — solo coordina)
 |---------|----------|
 | `/parallel-phases` | Lanza spec y design como agentes simultáneos |
 | `/parallel-apply` | Analiza dependencias y ejecuta tasks en paralelo donde es posible |
+| `/gc` | Guarda sesión en Engram y compacta el contexto — limpiar ruido acumulado |
 
 ---
 
