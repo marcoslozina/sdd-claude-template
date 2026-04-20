@@ -108,6 +108,12 @@ Con las respuestas:
 | AI Engineer | `role-ai-engineer/SKILL.md` | Integrar Claude API / LLMs |
 | RAG | `role-rag/SKILL.md` | Búsqueda semántica / knowledge base |
 | ML Engineering | `role-ml/SKILL.md` | Modelos, embeddings, serving |
+| Observabilidad | `role-observability/SKILL.md` | Logs, métricas, tracing |
+| Ambientes | `role-environments/SKILL.md` | Multi-env, feature flags, migrations |
+| Performance | `role-performance/SKILL.md` | Load testing, SLOs, profiling |
+| Seguridad | `role-security/SKILL.md` | OWASP, JWT, authn/authz |
+| Privacidad | `role-privacy/SKILL.md` | PII, secrets, cifrado, retención |
+| Orquestador | `role-orchestrator/SKILL.md` | Agentes en paralelo, Engram, delegación |
 
 **Si el lenguaje no tiene skill:** usá los principios agnósticos de este archivo y documentá las convenciones a medida que aparecen.
 
@@ -147,7 +153,8 @@ Opción A: [nombre]
 
 ### Fase 3 — SPEC + DESIGN
 **Trigger:** propuesta confirmada
-**Acción:** corré `/sdd-spec` y `/sdd-design` en paralelo
+**Acción:** `/parallel-phases` — lanza spec y design como sub-agentes simultáneos
+**Por qué paralelo:** son independientes entre sí → reduce el tiempo a la mitad
 **Pregunta de salida:** "¿El spec cubre todos los casos? ¿El diseño tiene sentido?"
 
 ### Fase 4 — TASKS
@@ -157,7 +164,7 @@ Opción A: [nombre]
 
 ### Fase 5 — IMPLEMENTACIÓN
 **Trigger:** tasks confirmadas
-**Acción:** `/sdd-apply` task por task
+**Acción:** `/parallel-apply` — analiza dependencias y ejecuta tasks en paralelo donde sea posible
 **Antes de cada task con decisión de arquitectura:** presentá la decisión, esperá confirmación
 
 ### Fase 6 — VERIFICACIÓN

@@ -106,6 +106,53 @@ El asistente no avanza una fase sin tu confirmación. Ante cada decisión de arq
 | `infra-aws` | CDK, servicios AWS, IAM least privilege, arquitecturas comunes |
 | `infra-docker` | Multi-stage builds por lenguaje, Compose local, seguridad de imágenes |
 
+### Orquestación de agentes
+
+| Skill | Cubre |
+|-------|-------|
+| `role-orchestrator` | Arquitectura de agentes, delegación paralela, protocolo de contexto con Engram |
+
+---
+
+## Arquitectura de agentes
+
+El template incluye un sistema de sub-agentes que corren en paralelo para reducir tiempos y tokens.
+
+```
+Orchestrator  (contexto mínimo — solo coordina)
+      │
+      ├── sdd-explore          →  sync
+      ├── sdd-propose          →  sync
+      │
+      ├── sdd-spec  ───────────┐
+      │                        ├──  PARALELO  (~50% menos tiempo)
+      ├── sdd-design ──────────┘
+      │
+      ├── sdd-tasks            →  sync
+      │
+      ├── apply task-A ────────┐
+      ├── apply task-B ────────┤
+      ├── apply task-C ────────┼──  PARALELO  (tasks independientes)
+      └── apply task-D ────────┘
+```
+
+### Dónde está el ahorro real
+
+| Mecanismo | Qué ahorra |
+|-----------|-----------|
+| Sub-agentes aislados | Cada agente carga solo el skill y contexto que necesita |
+| Spec + Design en paralelo | Tiempo a la mitad en la fase más larga |
+| Apply en paralelo | Tasks independientes corren simultáneas |
+| Engram entre sesiones | No re-explicás contexto ni decisiones ya tomadas |
+| Prompt caching | El contenido de los skills se cachea en la sesión (~90% menos costo en re-lecturas) |
+
+### Comandos de orquestación
+
+| Comando | Qué hace |
+|---------|----------|
+| `/parallel-phases` | Lanza spec y design como agentes simultáneos |
+| `/parallel-apply` | Analiza dependencias y ejecuta tasks en paralelo donde es posible |
+
 ---
 
 ## Comandos disponibles
@@ -115,6 +162,8 @@ El asistente no avanza una fase sin tu confirmación. Ante cada decisión de arq
 | `/start-session` | Setup guiado: lenguaje, tipo de sistema, restricciones |
 | `/status` | Estado actual del flujo SDD y tasks pendientes |
 | `/new-adr` | Crear nuevo Architecture Decision Record |
+| `/parallel-phases` | Spec + Design en paralelo (fase 3) |
+| `/parallel-apply` | Apply con análisis de dependencias y paralelismo (fase 5) |
 
 ---
 
