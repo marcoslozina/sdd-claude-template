@@ -17,11 +17,19 @@ Cuando el usuario abre el proyecto o describe un problema por primera vez, antes
 1. ¿Con qué lenguaje/stack vamos a trabajar hoy?
    → Python | Java | TypeScript | Go | Otro
 
-2. ¿Es un prototipo o va a producción?
+2. ¿Qué tipo de sistema es?
+   → App backend / API
+   → Frontend / Full-stack
+   → Sistema de IA / LLM / Agentes
+   → Pipeline de ML / Data
+   → Infraestructura / CI-CD
+   → Combinación (especificá)
+
+3. ¿Es un prototipo o va a producción?
    → Prototipo (menos capas, más velocidad)
    → Producción (arquitectura completa, tests, ADRs)
 
-3. ¿Hay restricciones conocidas?
+4. ¿Hay restricciones conocidas?
    → Frameworks obligatorios, integraciones, performance, deadline
 ```
 
@@ -30,7 +38,25 @@ Con las respuestas:
 - Ajustá el nivel de arquitectura según prototipo vs producción
 - Confirmá con el usuario: "Vamos con [stack], modo [prototipo/producción]. ¿Arrancamos?"
 
-**Lenguajes disponibles:** Python → `lang-python/SKILL.md` | Java → `lang-java/SKILL.md`
+**Lenguajes disponibles:**
+| Input | Skill |
+|-------|-------|
+| Python | `lang-python/SKILL.md` |
+| Java | `lang-java/SKILL.md` |
+| TypeScript / JavaScript | `lang-typescript/SKILL.md` |
+
+**Roles disponibles (cargar según contexto del problema):**
+| Rol | Skill | Cuándo cargarlo |
+|-----|-------|-----------------|
+| Arquitectura | `role-architect/SKILL.md` | Siempre |
+| Frontend | `role-frontend/SKILL.md` | Hay UI / React |
+| Code Review | `role-code-review/SKILL.md` | Revisar código existente |
+| CI/CD | `role-cicd/SKILL.md` | Pipeline / deploy |
+| AWS | `infra-aws/SKILL.md` | Infraestructura cloud AWS |
+| AI Engineer | `role-ai-engineer/SKILL.md` | Integrar Claude API / LLMs |
+| RAG | `role-rag/SKILL.md` | Búsqueda semántica / knowledge base |
+| ML Engineering | `role-ml/SKILL.md` | Modelos, embeddings, serving |
+
 **Si el lenguaje no tiene skill:** usá los principios agnósticos de este archivo y documentá las convenciones a medida que aparecen.
 
 ---
