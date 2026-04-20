@@ -2,81 +2,27 @@
 
 Template de desarrollo con **Spec-Driven Development (SDD)** y **Claude Code**.
 
-Cada sesión sigue un flujo guiado: el asistente pregunta antes de codear, presenta opciones de arquitectura con tradeoffs, y documenta cada decisión. No hay código sin entender el problema primero.
+El asistente guía cada sesión: pregunta antes de codear, presenta opciones de arquitectura con tradeoffs, documenta cada decisión y nunca avanza una fase sin confirmación. No hay código sin entender el problema primero.
 
 ---
 
-## ¿Qué incluye?
-
-### Skills por lenguaje
-| Lenguaje | Convenciones, patrones, testing |
-|----------|---------------------------------|
-| Python 3.12+ | uv, dataclasses, ports & adapters |
-| Java 21+ | Gradle, records, Spring Boot |
-| TypeScript | React, Node.js, Zod, Vitest |
-| Go 1.22+ | stdlib, Chi, interfaces pequeñas |
-
-### Skills por rol
-| Rol | Qué cubre |
-|-----|-----------|
-| Architect | Capas, ADRs, regla de dependencia |
-| Backend | REST, paginación, N+1, manejo de errores |
-| Frontend | React, Container/Presentational, estado, a11y |
-| Security | OWASP Top 10, JWT, secrets, threat modeling |
-| Testing | Pirámide, fakes vs mocks, Testcontainers |
-| CI/CD | GitHub Actions, Blue/Green, Canary, Docker |
-| AI Engineer | Claude API, tool use, prompt caching, batch |
-| RAG | Chunking, embeddings, reranking — docs oficiales Anthropic |
-| ML Engineering | Pipelines, serving, monitoreo de drift |
-
-### Infraestructura
-| Skill | Qué cubre |
-|-------|-----------|
-| AWS | CDK, servicios, IAM least privilege, arquitecturas comunes |
-| Docker | Multi-stage builds por lenguaje, Compose, seguridad |
-
-### Archivos listos
-- `.github/workflows/ci.yml` — pipeline CI con lint, unit tests, integration tests, security scan
-- `.github/pull_request_template.md` — checklist de arquitectura, seguridad y tests
-- `.github/dependabot.yml` — actualizaciones automáticas de dependencias
-- `docs/adr/ADR-000-template.md` — template para Architecture Decision Records
-- `Makefile` — comandos unificados: `make test`, `make lint`, `make build`
-- `AGENTS.md` — contexto del proyecto para agentes AI
-- `CLAUDE.md` — flujo SDD completo con protocolo de decisiones
-
----
-
-## Cómo usar este template
-
-### 1. Crear un nuevo proyecto desde el template
+## Inicio rápido
 
 ```bash
+# 1. Crear proyecto desde el template
 gh repo create nombre-del-proyecto \
   --template marcoslozina/sdd-claude-template \
   --clone
 
+# 2. Abrir con Claude Code
 cd nombre-del-proyecto
-```
-
-### 2. Abrir con Claude Code
-
-```bash
 claude
-```
 
-### 3. Iniciar la sesión guiada
-
-```
+# 3. Iniciar sesión guiada
 /start-session
 ```
 
-El asistente te va a preguntar:
-1. ¿Con qué lenguaje/stack vamos a trabajar?
-2. ¿Qué tipo de sistema es?
-3. ¿Es prototipo o producción?
-4. ¿Hay restricciones conocidas?
-
-Con esas respuestas carga los skills relevantes y arranca el flujo SDD.
+El asistente va a preguntar lenguaje, tipo de sistema y restricciones antes de arrancar.
 
 ---
 
@@ -86,25 +32,79 @@ Con esas respuestas carga los skills relevantes y arranca el flujo SDD.
 Problema
    │
    ▼
-/sdd-explore   →  Entender antes de comprometerse
+Exploración  →  entender antes de comprometerse
    │
    ▼
-Propuesta      →  2-3 opciones con tradeoffs  →  vos elegís
+Propuesta    →  2-3 opciones con tradeoffs  →  vos elegís
    │
    ▼
-Spec + Design  →  Qué hace + cómo lo hace     →  en paralelo
+Spec+Design  →  qué hace + cómo lo hace     →  en paralelo
    │
    ▼
-Tasks          →  Lista ordenada e implementable
+Tasks        →  lista ordenada e implementable
    │
    ▼
-/sdd-apply     →  Task por task, decisiones confirmadas
+Apply        →  task por task, decisiones confirmadas
    │
    ▼
-/sdd-verify    →  Verificar contra el spec original
+Verify       →  contra el spec original
 ```
 
-**Regla:** el asistente no avanza una fase sin tu confirmación. Ante cada decisión de arquitectura presenta opciones y espera.
+El asistente no avanza una fase sin tu confirmación. Ante cada decisión de arquitectura presenta opciones y espera.
+
+---
+
+## Skills disponibles
+
+### Lenguajes
+
+| Skill | Cubre |
+|-------|-------|
+| `lang-python` | Python 3.12+, uv, dataclasses, ports & adapters, mypy |
+| `lang-java` | Java 21+, Gradle, records, Spring Boot, JUnit 5 |
+| `lang-typescript` | TypeScript estricto, React, Node.js, Zod, Vitest |
+| `lang-go` | Go 1.22+, stdlib, Chi, interfaces pequeñas, testcontainers |
+
+### Arquitectura y diseño
+
+| Skill | Cubre |
+|-------|-------|
+| `role-architect` | Capas, ADRs, regla de dependencia, señales de alerta |
+| `role-backend` | REST, paginación cursor/offset, N+1, manejo de errores, HTTP semántico |
+| `role-frontend` | React, Container/Presentational, estado, a11y, performance |
+| `role-code-review` | Checklist por capa, OWASP, privacidad, señales de mal diseño |
+
+### Calidad y operaciones
+
+| Skill | Cubre |
+|-------|-------|
+| `role-testing` | Pirámide, fakes vs mocks, Testcontainers, naming conventions |
+| `role-performance` | Load/stress/soak testing con k6 y Locust, SLOs, profiling |
+| `role-observability` | Logging estructurado, métricas OpenTelemetry, tracing distribuido, alertas |
+| `role-cicd` | GitHub Actions, Blue/Green, Canary, Docker, secrets en pipeline |
+| `role-environments` | Multi-ambiente, feature flags, config tipada, zero-downtime migrations |
+
+### Seguridad y privacidad
+
+| Skill | Cubre |
+|-------|-------|
+| `role-security` | OWASP Top 10, JWT, authn/authz, input validation, headers HTTP |
+| `role-privacy` | Clasificación de datos, PII en logs/responses, cifrado, detección de secrets, retención |
+
+### IA y Machine Learning
+
+| Skill | Cubre |
+|-------|-------|
+| `role-ai-engineer` | Claude API oficial: tool use, prompt caching, streaming, batch API |
+| `role-rag` | Chunking, embeddings, reranking — basado en docs oficiales Anthropic |
+| `role-ml` | Pipelines, embeddings, serving con FastAPI, monitoreo de drift |
+
+### Infraestructura
+
+| Skill | Cubre |
+|-------|-------|
+| `infra-aws` | CDK, servicios AWS, IAM least privilege, arquitecturas comunes |
+| `infra-docker` | Multi-stage builds por lenguaje, Compose local, seguridad de imágenes |
 
 ---
 
@@ -118,15 +118,45 @@ Tasks          →  Lista ordenada e implementable
 
 ---
 
-## Agregar un nuevo skill
+## Archivos incluidos
 
-1. Crear `.claude/skills/{nombre}/SKILL.md`
-2. Agregar la referencia en `CLAUDE.md` en la tabla de skills disponibles
-3. Agregar la referencia en `AGENTS.md`
+| Archivo | Propósito |
+|---------|-----------|
+| `CLAUDE.md` | Instrucciones completas del asistente + reglas de seguridad |
+| `AGENTS.md` | Contexto del proyecto para cualquier agente AI |
+| `Makefile` | Comandos unificados: `make test`, `make lint`, `make build` |
+| `docs/adr/ADR-000-template.md` | Template para Architecture Decision Records |
+| `.github/workflows/ci.yml` | Pipeline CI: lint → unit → integration → security scan → build |
+| `.github/pull_request_template.md` | Checklist de arquitectura, seguridad y tests |
+| `.github/dependabot.yml` | Actualizaciones automáticas de dependencias (Python, Node, Go, Docker, Actions) |
 
 ---
 
-## Stack de los skills de IA
+## Reglas de seguridad
+
+El template tiene reglas que se aplican siempre, sin excepciones:
+
+- **`git push` requiere confirmación explícita** — el asistente muestra los commits y espera tu OK
+- **Escaneo de secrets antes de cada commit** — busca API keys, tokens, passwords hardcodeados
+- **Operaciones destructivas requieren confirmación** — `reset --hard`, `rm -rf`, `DROP TABLE`
+- **PII en código** — el asistente señala y pide reemplazar por datos ficticios
+
+---
+
+## Agregar un nuevo skill
+
+```bash
+# 1. Crear el archivo
+mkdir -p .claude/skills/{nombre}
+touch .claude/skills/{nombre}/SKILL.md
+
+# 2. Registrar en CLAUDE.md (tabla de skills disponibles)
+# 3. Registrar en AGENTS.md
+```
+
+---
+
+## Skills de IA — fuentes oficiales
 
 Los skills `role-ai-engineer` y `role-rag` están basados exclusivamente en documentación oficial de Anthropic:
 
@@ -134,6 +164,7 @@ Los skills `role-ai-engineer` y `role-rag` están basados exclusivamente en docu
 - [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
 - [RAG Guide](https://docs.anthropic.com/en/docs/build-with-claude/rag)
 - [Batch API](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing)
+- [Streaming](https://docs.anthropic.com/en/docs/build-with-claude/streaming)
 
 ---
 
