@@ -167,6 +167,36 @@ Orchestrator  (contexto mínimo — solo coordina)
 
 ---
 
+## GitHub Actions AI Workflows
+
+Cinco workflows que integran Claude directamente en el ciclo de desarrollo del equipo.
+
+> **Prerequisito:** Agregar `ANTHROPIC_API_KEY` como secret en `Settings → Secrets and variables → Actions`.
+
+| Workflow | Trigger | Modelo | Qué hace |
+|----------|---------|--------|----------|
+| `ai-issue-triage.yml` | Issue abierto | Haiku | Clasifica tipo, prioridad y esfuerzo — aplica labels automáticamente |
+| `ai-pr-description.yml` | PR abierto (body vacío) | Sonnet | Genera descripción estructurada si el PR no tiene una |
+| `ai-pr-review.yml` | PR abierto / push | Sonnet | Code review con prioridades 🔴🟡🔵 — detecta secrets, PII, N+1, auth |
+| `adr-check.yml` | PR abierto / push | Haiku | Detecta cambios de arquitectura y avisa si falta un ADR |
+| `changelog.yml` | Push a main | Haiku | Genera entrada de CHANGELOG agrupada por tipo desde los commits |
+
+### Flujo completo
+
+```
+Issue creado    →  triage automático: type / priority / effort / labels
+PR abierto      →  descripción generada (si está vacía)
+                →  code review con niveles de severidad
+                →  ADR check (¿cambio de arquitectura sin documentar?)
+Merge a main    →  entrada de changelog generada automáticamente
+```
+
+### Personalización
+
+Cada workflow tiene el prompt del sistema en el paso de Python — editá el contenido del `system=` para ajustar criterios, idioma o formato a las convenciones de tu equipo.
+
+---
+
 ## Archivos incluidos
 
 | Archivo | Propósito |
@@ -176,6 +206,11 @@ Orchestrator  (contexto mínimo — solo coordina)
 | `Makefile` | Comandos unificados: `make test`, `make lint`, `make build` |
 | `docs/adr/ADR-000-template.md` | Template para Architecture Decision Records |
 | `.github/workflows/ci.yml` | Pipeline CI: lint → unit → integration → security scan → build |
+| `.github/workflows/ai-issue-triage.yml` | AI triage de issues |
+| `.github/workflows/ai-pr-description.yml` | AI generación de descripción de PR |
+| `.github/workflows/ai-pr-review.yml` | AI code review en PRs |
+| `.github/workflows/adr-check.yml` | Detección de cambios de arquitectura sin ADR |
+| `.github/workflows/changelog.yml` | AI generación de changelog en merge a main |
 | `.github/pull_request_template.md` | Checklist de arquitectura, seguridad y tests |
 | `.github/dependabot.yml` | Actualizaciones automáticas de dependencias (Python, Node, Go, Docker, Actions) |
 
