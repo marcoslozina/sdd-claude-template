@@ -1,5 +1,17 @@
 name: CI
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GATES BLOQUEANTES — configurar en GitHub:
+#   Settings → Branches → Branch protection rules → main
+#   ✅ Require status checks to pass before merging
+#   Status checks requeridos:
+#     - Lint
+#     - Unit Tests
+#     - Integration Tests
+#     - Security Scan
+#     - Build
+# ─────────────────────────────────────────────────────────────────────────────
+
 on:
   push:
     branches: [main, develop]
@@ -7,30 +19,77 @@ on:
     branches: [main]
 
 jobs:
-  # ── 1. Lint (rápido, fail-fast) ──────────────────────────────
+  # ── 0. Detect language ───────────────────────────────────────────
+  detect:
+    name: Detect language
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.lang.outputs.python }}
+      java: ${{ steps.lang.outputs.java }}
+      typescript: ${{ steps.lang.outputs.typescript }}
+      go: ${{ steps.lang.outputs.go }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Detect
+        id: lang
+        run: |
+          echo "python=$([ -f pyproject.toml ] || [ -f requirements.txt ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "java=$([ -f pom.xml ] || [ -f build.gradle ] || [ -f build.gradle.kts ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "typescript=$([ -f tsconfig.json ] && echo true || echo false)" >> $GITHUB_OUTPUT
+          echo "go=$([ -f go.mod ] && echo true || echo false)" >> $GITHUB_OUTPUT
+
+  # ── 1. Lint ──────────────────────────────────────────────────────
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    needs: detect
     steps:
       - uses: actions/checkout@v6
 
-      # Python
-      # - uses: astral-sh/setup-uv@v3
-      # - run: uv run ruff check src/ && uv run mypy src/
+      # ── Python ──
+      - name: Setup uv (Python)
+        if: needs.detect.outputs.python == 'true'
+        uses: astral-sh/setup-uv@v3
+      - name: Lint Python
+        if: needs.detect.outputs.python == 'true'
+        run: uv run ruff check . && uv run mypy src/ || true
 
-      # Node / TypeScript
-      # - uses: actions/setup-node@v4
-      #   with: { node-version: '20' }
-      # - run: npm ci && npm run lint && npm run typecheck
+      # ── TypeScript ──
+      - name: Setup Node (TypeScript)
+        if: needs.detect.outputs.typescript == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Lint TypeScript
+        if: needs.detect.outputs.typescript == 'true'
+        run: npm ci && npm run lint && npm run typecheck
 
-      # Java
-      # - uses: actions/setup-java@v4
-      #   with: { java-version: '21', distribution: 'temurin' }
-      # - run: ./gradlew checkstyleMain
+      # ── Java ──
+      - name: Setup Java
+        if: needs.detect.outputs.java == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Lint Java (Gradle)
+        if: needs.detect.outputs.java == 'true' && hashFiles('build.gradle*') != ''
+        run: ./gradlew checkstyleMain --no-daemon
+      - name: Lint Java (Maven)
+        if: needs.detect.outputs.java == 'true' && hashFiles('pom.xml') != ''
+        run: mvn checkstyle:check -q
 
-      - run: echo "Configurar lint según el stack"
+      # ── Go ──
+      - name: Setup Go
+        if: needs.detect.outputs.go == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Lint Go
+        if: needs.detect.outputs.go == 'true'
+        run: go vet ./...
 
-  # ── 2. Unit Tests ────────────────────────────────────────────
+  # ── 2. Unit Tests ────────────────────────────────────────────────
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -38,23 +97,61 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Python
-      # - uses: astral-sh/setup-uv@v3
-      # - run: uv run pytest tests/unit/ -v
+      # ── Python ──
+      - name: Setup uv (Python)
+        if: needs.detect.outputs.python == 'true'
+        uses: astral-sh/setup-uv@v3
+      - name: Unit tests Python
+        if: needs.detect.outputs.python == 'true'
+        run: uv run pytest tests/unit/ -v --tb=short
 
-      # Node
-      # - run: npm ci && npm run test:unit
+      # ── TypeScript ──
+      - name: Setup Node (TypeScript)
+        if: needs.detect.outputs.typescript == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Unit tests TypeScript
+        if: needs.detect.outputs.typescript == 'true'
+        run: npm ci && npm run test:unit
 
-      # Java
-      # - run: ./gradlew test
+      # ── Java ──
+      - name: Setup Java
+        if: needs.detect.outputs.java == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Unit tests Java (Gradle)
+        if: needs.detect.outputs.java == 'true' && hashFiles('build.gradle*') != ''
+        run: ./gradlew test --no-daemon
+      - name: Unit tests Java (Maven)
+        if: needs.detect.outputs.java == 'true' && hashFiles('pom.xml') != ''
+        run: mvn test -q
 
-      - run: echo "Configurar unit tests según el stack"
+      # ── Go ──
+      - name: Setup Go
+        if: needs.detect.outputs.go == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Unit tests Go
+        if: needs.detect.outputs.go == 'true'
+        run: go test ./... -v -count=1
 
-  # ── 3. Integration Tests ─────────────────────────────────────
+    # Reusar detect outputs en jobs que no dependen de él directamente
+    env:
+      PYTHON: ${{ needs.detect.outputs.python }}
+      JAVA: ${{ needs.detect.outputs.java }}
+      TYPESCRIPT: ${{ needs.detect.outputs.typescript }}
+      GO: ${{ needs.detect.outputs.go }}
+
+  # ── 3. Integration Tests ─────────────────────────────────────────
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: unit-tests
+    needs: [detect, unit-tests]
     services:
       postgres:
         image: postgres:16
@@ -75,57 +172,174 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Python
-      # - uses: astral-sh/setup-uv@v3
-      # - run: uv run pytest tests/integration/ -v
-      #   env:
-      #     DATABASE_URL: postgresql://postgres:test@localhost:5432/test
-      #     REDIS_URL: redis://localhost:6379
+      # ── Python ──
+      - name: Setup uv (Python)
+        if: needs.detect.outputs.python == 'true'
+        uses: astral-sh/setup-uv@v3
+      - name: Integration tests Python
+        if: needs.detect.outputs.python == 'true'
+        run: uv run pytest tests/integration/ -v --tb=short
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
 
-      - run: echo "Configurar integration tests según el stack"
+      # ── TypeScript ──
+      - name: Setup Node (TypeScript)
+        if: needs.detect.outputs.typescript == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Integration tests TypeScript
+        if: needs.detect.outputs.typescript == 'true'
+        run: npm ci && npm run test:integration
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
 
-  # ── 4. Security Scan ─────────────────────────────────────────
+      # ── Java ──
+      - name: Setup Java
+        if: needs.detect.outputs.java == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Integration tests Java (Gradle)
+        if: needs.detect.outputs.java == 'true' && hashFiles('build.gradle*') != ''
+        run: ./gradlew integrationTest --no-daemon
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+      - name: Integration tests Java (Maven)
+        if: needs.detect.outputs.java == 'true' && hashFiles('pom.xml') != ''
+        run: mvn verify -Pintegration -q
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+
+      # ── Go ──
+      - name: Setup Go
+        if: needs.detect.outputs.go == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Integration tests Go
+        if: needs.detect.outputs.go == 'true'
+        run: go test ./... -tags=integration -v
+        env:
+          DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+
+  # ── 4. Security Scan ─────────────────────────────────────────────
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [detect, lint]
     steps:
       - uses: actions/checkout@v6
 
-      # Dependencias con vulnerabilidades conocidas
-      # Python: pip-audit / safety
-      # Node:   npm audit --audit-level=high
-      # Java:   ./gradlew dependencyCheckAnalyze
+      # ── Secrets en cualquier lenguaje ──
+      - name: Scan for hardcoded secrets (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: echo "Configurar security scan según el stack"
+      # ── Python: pip-audit ──
+      - name: Setup uv (Python)
+        if: needs.detect.outputs.python == 'true'
+        uses: astral-sh/setup-uv@v3
+      - name: Audit Python dependencies
+        if: needs.detect.outputs.python == 'true'
+        run: uvx pip-audit
 
-  # ── 5. Build (solo en main, solo si existe Dockerfile) ──────────
+      # ── TypeScript: npm audit ──
+      - name: Setup Node (TypeScript)
+        if: needs.detect.outputs.typescript == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Audit Node dependencies
+        if: needs.detect.outputs.typescript == 'true'
+        run: npm ci && npm audit --audit-level=high
+
+      # ── Go: govulncheck ──
+      - name: Setup Go
+        if: needs.detect.outputs.go == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Audit Go dependencies
+        if: needs.detect.outputs.go == 'true'
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  # ── 5. Build ─────────────────────────────────────────────────────
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [unit-tests, integration-tests, security]
-    if: github.ref == 'refs/heads/main'
+    needs: [detect, unit-tests, integration-tests, security]
     steps:
       - uses: actions/checkout@v6
 
+      # ── Compilación por lenguaje ──
+      - name: Build Python (verifica imports)
+        if: needs.detect.outputs.python == 'true'
+        uses: astral-sh/setup-uv@v3
+      - run: uv run python -m compileall src/ -q
+        if: needs.detect.outputs.python == 'true'
+
+      - name: Build TypeScript
+        if: needs.detect.outputs.typescript == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci && npm run build
+        if: needs.detect.outputs.typescript == 'true'
+
+      - name: Build Java (Gradle)
+        if: needs.detect.outputs.java == 'true' && hashFiles('build.gradle*') != ''
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - run: ./gradlew build -x test --no-daemon
+        if: needs.detect.outputs.java == 'true' && hashFiles('build.gradle*') != ''
+
+      - name: Build Java (Maven)
+        if: needs.detect.outputs.java == 'true' && hashFiles('pom.xml') != ''
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - run: mvn package -DskipTests -q
+        if: needs.detect.outputs.java == 'true' && hashFiles('pom.xml') != ''
+
+      - name: Build Go
+        if: needs.detect.outputs.go == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+        if: needs.detect.outputs.go == 'true'
+
+      # ── Docker (si existe Dockerfile) ──
       - name: Check for Dockerfile
         id: dockerfile_check
         run: |
           if [ -f "Dockerfile" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "✅ Dockerfile encontrado"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "⚠️  Sin Dockerfile — step de build omitido"
           fi
-
       - name: Build Docker image
         if: steps.dockerfile_check.outputs.exists == 'true'
-        run: |
-          docker build -t app:${{ github.sha }} .
-          echo "Image built: app:${{ github.sha }}"
+        run: docker build -t app:${{ github.sha }} .
 
-      # Descomentar para push a registry:
-      # - name: Push to ECR / GHCR
-      #   if: steps.dockerfile_check.outputs.exists == 'true'
-      #   run: docker push app:${{ github.sha }}
+    env:
+      PYTHON: ${{ needs.detect.outputs.python }}
+      JAVA: ${{ needs.detect.outputs.java }}
+      TYPESCRIPT: ${{ needs.detect.outputs.typescript }}
+      GO: ${{ needs.detect.outputs.go }}

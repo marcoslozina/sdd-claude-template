@@ -167,6 +167,43 @@ Orchestrator  (contexto mínimo — solo coordina)
 
 ---
 
+## CI/CD — Gates bloqueantes
+
+El pipeline bloquea el merge si falla lint, tests, security scan o build.
+
+### Activar branch protection en GitHub
+
+```
+Settings → Branches → Add rule → Branch name: main
+✅ Require status checks to pass before merging
+✅ Require branches to be up to date before merging
+```
+
+Status checks requeridos (exactamente como aparecen en Actions):
+
+| Status check | Qué verifica |
+|---|---|
+| `Lint` | Ruff/mypy, ESLint/tsc, Checkstyle, go vet |
+| `Unit Tests` | Tests unitarios por lenguaje |
+| `Integration Tests` | Tests de integración con Postgres + Redis reales |
+| `Security Scan` | Gitleaks (secrets), pip-audit, npm audit, govulncheck |
+| `Build` | Compilación + Docker build si hay Dockerfile |
+| `Format (Python/Java/TypeScript/Go)` | Formato correcto según lenguaje detectado |
+| `Check links in markdown` | Links rotos en archivos `.md` |
+
+### Detección automática de lenguaje
+
+El CI detecta el lenguaje del proyecto por los archivos raíz y ejecuta solo los pasos relevantes:
+
+| Archivo detectado | Lenguaje activado |
+|---|---|
+| `pyproject.toml` / `requirements.txt` | Python |
+| `pom.xml` / `build.gradle*` | Java |
+| `tsconfig.json` | TypeScript |
+| `go.mod` | Go |
+
+---
+
 ## GitHub Actions AI Workflows
 
 Cinco workflows que integran Claude directamente en el ciclo de desarrollo del equipo.
