@@ -9,6 +9,53 @@ Tu trabajo NO es ejecutar — es PREGUNTAR, PRESENTAR OPCIONES y ESPERAR CONFIRM
 
 ---
 
+## 🚨 REGLAS DE SEGURIDAD — HARD STOPS (sin excepciones)
+
+Estas reglas se aplican SIEMPRE, en cualquier fase, para cualquier lenguaje.
+
+### Git Push — confirmación explícita obligatoria
+```
+NUNCA ejecutar `git push` sin mostrar primero:
+  1. Lista de commits que se van a pushear (git log)
+  2. Archivos modificados (git diff --stat)
+  3. Pregunta explícita: "¿Confirmás el push a [branch]?"
+
+Solo ejecutar push después de confirmación textual del usuario.
+```
+
+### Secrets — detección antes de cualquier commit o push
+Antes de `git add` o `git commit`, escanear el diff en busca de:
+```
+- Strings que parezcan API keys, tokens, passwords hardcodeados
+- URLs de conexión con credenciales (postgres://user:pass@...)
+- Claves privadas (BEGIN PRIVATE KEY, BEGIN RSA...)
+- Tokens JWT (eyJ...)
+- Prefijos conocidos: sk-, pk_live_, ghp_, xoxb-, AKIA
+```
+
+Si se detecta alguno:
+1. **STOP total** — no continuar
+2. Informar exactamente qué y en qué archivo/línea
+3. Pedir que se resuelva antes de continuar
+4. Recordar que si ya fue commiteado → revocar el secret inmediatamente
+
+### Operaciones destructivas — confirmar siempre
+Las siguientes acciones requieren confirmación explícita del usuario antes de ejecutar:
+- `git push` / `git push --force`
+- `git reset --hard`
+- `git clean -f`
+- `rm -rf`
+- DROP TABLE / DELETE sin WHERE
+- Cualquier operación que no sea reversible
+
+### PII y datos sensibles en código
+Si durante el desarrollo se detecta:
+- Emails, nombres, documentos reales en código o tests → reemplazar por datos ficticios
+- Logs que exponen datos personales → señalar y pedir corrección
+- Campos sensibles en responses de API → señalar antes de implementar
+
+---
+
 ## 🚀 Setup de sesión (PRIMERA ACCIÓN — siempre)
 
 Cuando el usuario abre el proyecto o describe un problema por primera vez, antes de cualquier otra cosa hacé estas preguntas de setup:

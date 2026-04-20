@@ -45,6 +45,28 @@ Cada problema encontrado: descripción, impacto concreto, fix con código.
 - [ ] **Dependencias**: versiones sin vulnerabilidades conocidas
 - [ ] **Rate limiting**: endpoints públicos con límite de requests
 
+## Checklist de privacidad (obligatorio si hay datos de usuarios)
+
+- [ ] **Secrets en código**: escanear con regex antes de aprobar
+  - Patrones: `api_key\s*=\s*["']`, `sk-`, `pk_live_`, `postgres://user:pass@`
+- [ ] **PII en logs**: emails, nombres, IPs completas, documentos → nunca completos
+- [ ] **Data minimization**: la API solo devuelve los campos que el cliente necesita
+- [ ] **Campos sensibles**: passwords, tokens, hashes → nunca en responses
+- [ ] **Cifrado en tránsito**: toda comunicación por HTTPS/TLS
+- [ ] **Cifrado en reposo**: PII crítica cifrada en DB (DNI, tarjetas, datos médicos)
+- [ ] **Retención**: datos con política de expiración definida
+
+### Señales de alerta de privacidad — bloquear el PR
+
+| Señal | Severidad | Acción |
+|-------|-----------|--------|
+| Secret hardcodeado | 🔴 Crítico | Bloquear + revocar inmediatamente |
+| Password/token en log | 🔴 Crítico | Bloquear |
+| `password_hash` en response | 🔴 Crítico | Bloquear |
+| Email completo en log | 🟡 Importante | Pedir fix antes de merge |
+| PII sin cifrar en DB | 🟡 Importante | Pedir fix antes de merge |
+| Más datos de los necesarios en response | 🔵 Sugerencia | Comentar en review |
+
 ---
 
 ## Checklist de performance
