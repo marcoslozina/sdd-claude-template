@@ -44,14 +44,19 @@ Con las respuestas:
 | Python | `lang-python/SKILL.md` |
 | Java | `lang-java/SKILL.md` |
 | TypeScript / JavaScript | `lang-typescript/SKILL.md` |
+| Go | `lang-go/SKILL.md` |
 
 **Roles disponibles (cargar según contexto del problema):**
 | Rol | Skill | Cuándo cargarlo |
 |-----|-------|-----------------|
 | Arquitectura | `role-architect/SKILL.md` | Siempre |
+| Backend | `role-backend/SKILL.md` | API REST / GraphQL |
 | Frontend | `role-frontend/SKILL.md` | Hay UI / React |
 | Code Review | `role-code-review/SKILL.md` | Revisar código existente |
+| Seguridad | `role-security/SKILL.md` | Authn, authz, datos sensibles |
+| Testing | `role-testing/SKILL.md` | Estrategia de tests |
 | CI/CD | `role-cicd/SKILL.md` | Pipeline / deploy |
+| Docker | `infra-docker/SKILL.md` | Contenedores |
 | AWS | `infra-aws/SKILL.md` | Infraestructura cloud AWS |
 | AI Engineer | `role-ai-engineer/SKILL.md` | Integrar Claude API / LLMs |
 | RAG | `role-rag/SKILL.md` | Búsqueda semántica / knowledge base |
