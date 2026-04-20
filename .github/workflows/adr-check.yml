@@ -35,24 +35,18 @@ jobs:
       - name: Detect architecture-significant changes
         id: arch
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DIFF=$(git diff origin/${{ github.base_ref }}...HEAD -- \
-            '*.py' '*.java' '*.ts' '*.go' \
-            'docker-compose*' 'Dockerfile*' \
-            '*requirements*.txt' 'pyproject.toml' \
-            'build.gradle*' 'pom.xml' \
-            'package.json' 'go.mod' | head -c 5000)
-
-          pip install -q anthropic
+          pip install -q openai
           python3 - <<'EOF' > arch_result.txt
-          import anthropic, os, sys
+          from openai import OpenAI
+          import os, subprocess
 
-          client = anthropic.Anthropic()
-          diff = open("/dev/stdin").read() if not sys.stdin.isatty() else ""
+          client = OpenAI(
+              base_url="https://models.inference.ai.azure.com",
+              api_key=os.environ["GITHUB_TOKEN"],
+          )
 
-          # Leer diff desde variable de entorno
-          import subprocess
           diff_result = subprocess.run(
               ['git', 'diff', f'origin/{os.environ.get("BASE_REF", "main")}...HEAD'],
               capture_output=True, text=True
@@ -63,17 +57,19 @@ jobs:
               print("NO_ARCH_CHANGE")
               exit(0)
 
-          response = client.messages.create(
-              model="claude-haiku-4-5-20251001",
+          response = client.chat.completions.create(
+              model="gpt-4o-mini",
               max_tokens=100,
-              system="""Analizás diffs de código para detectar cambios de arquitectura.
+              messages=[
+                  {"role": "system", "content": """Analizás diffs de código para detectar cambios de arquitectura.
           Responder SOLO con YES o NO.
           Cambios que requieren ADR: nueva dependencia externa, cambio de framework,
           nueva capa o módulo, cambio en cómo se comunican componentes,
-          cambio en estrategia de persistencia, decisión de diseño no obvia.""",
-              messages=[{"role": "user", "content": f"¿Este diff tiene cambios de arquitectura que requieren ADR?\n\n{diff}"}]
+          cambio en estrategia de persistencia, decisión de diseño no obvia."""},
+                  {"role": "user", "content": f"¿Este diff tiene cambios de arquitectura que requieren ADR?\n\n{diff}"}
+              ]
           )
-          result = response.content[0].text.strip().upper()
+          result = response.choices[0].message.content.strip().upper()
           print("YES" if "YES" in result else "NO")
           EOF
 

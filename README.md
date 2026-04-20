@@ -217,15 +217,15 @@ El CI detecta el lenguaje del proyecto por los archivos raíz y ejecuta solo los
 
 Cinco workflows que integran Claude directamente en el ciclo de desarrollo del equipo.
 
-> **Prerequisito:** Agregar `ANTHROPIC_API_KEY` como secret en `Settings → Secrets and variables → Actions`.
+> **Sin setup requerido:** los workflows de AI usan `GITHUB_TOKEN`, disponible automáticamente en cada run. No necesitás ningún secret adicional.
 
 | Workflow | Trigger | Modelo | Qué hace |
 |----------|---------|--------|----------|
-| `ai-issue-triage.yml` | Issue abierto | Haiku | Clasifica tipo, prioridad y esfuerzo — aplica labels automáticamente |
-| `ai-pr-description.yml` | PR abierto (body vacío) | Sonnet | Genera descripción estructurada si el PR no tiene una |
-| `ai-pr-review.yml` | PR abierto / push | Sonnet | Code review con prioridades 🔴🟡🔵 — detecta secrets, PII, N+1, auth |
-| `adr-check.yml` | PR abierto / push | Haiku | Detecta cambios de arquitectura y avisa si falta un ADR |
-| `changelog.yml` | Push a main | Haiku | Genera entrada de CHANGELOG agrupada por tipo desde los commits |
+| `ai-issue-triage.yml` | Issue abierto | gpt-4o-mini | Clasifica tipo, prioridad y esfuerzo — aplica labels automáticamente |
+| `ai-pr-description.yml` | PR abierto (body vacío) | gpt-4o-mini | Genera descripción estructurada si el PR no tiene una |
+| `ai-pr-review.yml` | PR abierto / push | gpt-4o-mini | Code review con prioridades 🔴🟡🔵 — detecta secrets, PII, N+1, auth |
+| `adr-check.yml` | PR abierto / push | gpt-4o-mini | Detecta cambios de arquitectura y avisa si falta un ADR |
+| `changelog.yml` | Push a main | gpt-4o-mini | Genera entrada de CHANGELOG agrupada por tipo desde los commits |
 
 ### Flujo completo
 

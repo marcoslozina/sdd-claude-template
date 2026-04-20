@@ -36,25 +36,30 @@ jobs:
           echo "No commits since last tag — skipping changelog."
           exit 0
 
-      - name: Generate changelog with Claude
+      - name: Generate changelog with GitHub Models
         if: steps.commits.outputs.commits != ''
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMITS: ${{ steps.commits.outputs.commits }}
         run: |
-          pip install -q anthropic
+          pip install -q openai
           python3 - <<'EOF' > changelog_entry.md
-          import anthropic, os
+          from openai import OpenAI
+          import os
           from datetime import date
 
-          client = anthropic.Anthropic()
+          client = OpenAI(
+              base_url="https://models.inference.ai.azure.com",
+              api_key=os.environ["GITHUB_TOKEN"],
+          )
           commits = os.environ["COMMITS"]
           today = date.today().isoformat()
 
-          response = client.messages.create(
-              model="claude-haiku-4-5-20251001",
+          response = client.chat.completions.create(
+              model="gpt-4o-mini",
               max_tokens=800,
-              system="""Generás entradas de CHANGELOG en formato Keep a Changelog.
+              messages=[
+                  {"role": "system", "content": """Generás entradas de CHANGELOG en formato Keep a Changelog.
           Agrupá los commits en secciones: Added, Changed, Fixed, Removed, Security.
           Omití secciones vacías. Usá bullet points concisos.
           Responder SOLO con el markdown del bloque, sin texto extra.
@@ -63,13 +68,11 @@ jobs:
           ### Added
           - ...
           ### Fixed
-          - ...""",
-              messages=[{
-                  "role": "user",
-                  "content": f"Fecha: {today}\n\nCommits:\n{commits}"
-              }]
+          - ..."""},
+                  {"role": "user", "content": f"Fecha: {today}\n\nCommits:\n{commits}"}
+              ]
           )
-          print(response.content[0].text)
+          print(response.choices[0].message.content)
           EOF
 
       - name: Prepend to CHANGELOG.md

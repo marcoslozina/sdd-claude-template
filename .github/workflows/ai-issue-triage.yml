@@ -12,24 +12,29 @@ jobs:
       issues: write
 
     steps:
-      - name: Triage with Claude
+      - name: Triage with GitHub Models
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          pip install -q anthropic
+          pip install -q openai
           python3 - <<'EOF' > triage.json
-          import anthropic, os, json
+          from openai import OpenAI
+          import os, json
 
-          client = anthropic.Anthropic()
+          client = OpenAI(
+              base_url="https://models.inference.ai.azure.com",
+              api_key=os.environ["GITHUB_TOKEN"],
+          )
           title = os.environ["ISSUE_TITLE"]
           body = os.environ.get("ISSUE_BODY", "")[:2000]
 
-          response = client.messages.create(
-              model="claude-haiku-4-5-20251001",
+          response = client.chat.completions.create(
+              model="gpt-4o-mini",
               max_tokens=300,
-              system="""Analizás issues de GitHub y devolvés un JSON con:
+              messages=[
+                  {"role": "system", "content": """Analizás issues de GitHub y devolvés un JSON con:
           {
             "type": "bug" | "feature" | "docs" | "question" | "security",
             "priority": "critical" | "high" | "medium" | "low",
@@ -43,15 +48,13 @@ jobs:
 
           Security es cualquier reporte de vulnerabilidad, secret expuesto, o auth bypass.
           Critical es: producción caída, pérdida de datos, vulnerabilidad de seguridad.
-          Responder SOLO con el JSON, sin texto extra.""",
-              messages=[{
-                  "role": "user",
-                  "content": f"Title: {title}\n\nBody: {body}"
-              }]
+          Responder SOLO con el JSON, sin texto extra."""},
+                  {"role": "user", "content": f"Title: {title}\n\nBody: {body}"}
+              ]
           )
 
           try:
-              result = json.loads(response.content[0].text)
+              result = json.loads(response.choices[0].message.content)
           except:
               result = {
                   "type": "question",

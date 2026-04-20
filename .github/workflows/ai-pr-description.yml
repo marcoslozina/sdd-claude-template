@@ -33,24 +33,29 @@ jobs:
         if: steps.check.outputs.empty == 'true'
         run: git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
 
-      - name: Generate description with Claude
+      - name: Generate description with GitHub Models
         if: steps.check.outputs.empty == 'true'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          pip install -q anthropic
+          pip install -q openai
           python3 - <<'EOF' > description.txt
-          import anthropic, os
+          from openai import OpenAI
+          import os
 
-          client = anthropic.Anthropic()
+          client = OpenAI(
+              base_url="https://models.inference.ai.azure.com",
+              api_key=os.environ["GITHUB_TOKEN"],
+          )
           diff = open("pr_diff.txt").read()[:6000]
           title = os.environ["PR_TITLE"]
 
-          response = client.messages.create(
-              model="claude-sonnet-4-6",
+          response = client.chat.completions.create(
+              model="gpt-4o-mini",
               max_tokens=1024,
-              system="""Generás descripciones de PRs concisas y técnicas.
+              messages=[
+                  {"role": "system", "content": """Generás descripciones de PRs concisas y técnicas.
           Formato obligatorio (markdown):
 
           ## ¿Qué hace este PR?
@@ -68,13 +73,11 @@ jobs:
           1. [paso concreto]
           2. [paso concreto]
 
-          Sin relleno. Solo lo que está en el diff.""",
-              messages=[{
-                  "role": "user",
-                  "content": f"Título: {title}\n\nDiff:\n```diff\n{diff}\n```"
-              }]
+          Sin relleno. Solo lo que está en el diff."""},
+                  {"role": "user", "content": f"Título: {title}\n\nDiff:\n```diff\n{diff}\n```"}
+              ]
           )
-          print(response.content[0].text)
+          print(response.choices[0].message.content)
           EOF
 
       - name: Update PR description

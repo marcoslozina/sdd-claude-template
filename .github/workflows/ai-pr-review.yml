@@ -29,25 +29,28 @@ jobs:
           echo "⚠️ Diff muy grande (>2000 líneas). Review manual requerido."
           exit 0
 
-      - name: Claude AI Review
+      - name: GitHub Models AI Review
         if: steps.diff.outputs.lines <= 2000
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DIFF=$(cat pr_diff.txt)
-
-          pip install -q anthropic
+          pip install -q openai
           REVIEW=$(python3 - <<'EOF'
-          import anthropic, os, sys
+          from openai import OpenAI
+          import os
 
-          client = anthropic.Anthropic()
+          client = OpenAI(
+              base_url="https://models.inference.ai.azure.com",
+              api_key=os.environ["GITHUB_TOKEN"],
+          )
 
           diff = open("pr_diff.txt").read()
 
-          response = client.messages.create(
-              model="claude-sonnet-4-6",
+          response = client.chat.completions.create(
+              model="gpt-4o-mini",
               max_tokens=2048,
-              system="""Sos un Senior Architect haciendo code review.
+              messages=[
+                  {"role": "system", "content": """Sos un Senior Architect haciendo code review.
           Revisá el diff con criterio técnico real. Sin comentarios positivos genéricos.
 
           Para cada problema encontrado usá este formato exacto:
@@ -55,7 +58,7 @@ jobs:
           🔴 CRÍTICO — `archivo:línea`
           **Problema:** descripción en una línea
           **Impacto:** qué puede pasar si no se corrige
-          **Fix:** \`código corregido\`
+          **Fix:** `código corregido`
 
           🟡 IMPORTANTE — `archivo:línea`
           **Problema:** ...
@@ -76,13 +79,11 @@ jobs:
           8. Tests que no verifican comportamiento real
 
           Si no hay problemas reales: responder solo "✅ Sin problemas críticos detectados."
-          Sin relleno, sin resumen positivo.""",
-              messages=[{
-                  "role": "user",
-                  "content": f"Revisá este diff:\n\n```diff\n{diff[:8000]}\n```"
-              }]
+          Sin relleno, sin resumen positivo."""},
+                  {"role": "user", "content": f"Revisá este diff:\n\n```diff\n{diff[:8000]}\n```"}
+              ]
           )
-          print(response.content[0].text)
+          print(response.choices[0].message.content)
           EOF
           )
 
