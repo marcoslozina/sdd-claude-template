@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── 1. Lint (rápido, fail-fast) ──────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Python
+      # - uses: astral-sh/setup-uv@v3
+      # - run: uv run ruff check src/ && uv run mypy src/
+
+      # Node / TypeScript
+      # - uses: actions/setup-node@v4
+      #   with: { node-version: '20' }
+      # - run: npm ci && npm run lint && npm run typecheck
+
+      # Java
+      # - uses: actions/setup-java@v4
+      #   with: { java-version: '21', distribution: 'temurin' }
+      # - run: ./gradlew checkstyleMain
+
+      - run: echo "Configurar lint según el stack"
+
+  # ── 2. Unit Tests ────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      # Python
+      # - uses: astral-sh/setup-uv@v3
+      # - run: uv run pytest tests/unit/ -v
+
+      # Node
+      # - run: npm ci && npm run test:unit
+
+      # Java
+      # - run: ./gradlew test
+
+      - run: echo "Configurar unit tests según el stack"
+
+  # ── 3. Integration Tests ─────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      # Python
+      # - uses: astral-sh/setup-uv@v3
+      # - run: uv run pytest tests/integration/ -v
+      #   env:
+      #     DATABASE_URL: postgresql://postgres:test@localhost:5432/test
+      #     REDIS_URL: redis://localhost:6379
+
+      - run: echo "Configurar integration tests según el stack"
+
+  # ── 4. Security Scan ─────────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      # Dependencias con vulnerabilidades conocidas
+      # Python: pip-audit / safety
+      # Node:   npm audit --audit-level=high
+      # Java:   ./gradlew dependencyCheckAnalyze
+
+      - run: echo "Configurar security scan según el stack"
+
+  # ── 5. Build (solo en main) ───────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, security]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t app:${{ github.sha }} .
+          echo "Image built: app:${{ github.sha }}"
+
+      # Descomentar para push a registry:
+      # - name: Push to ECR / GHCR
+      #   run: docker push app:${{ github.sha }}
