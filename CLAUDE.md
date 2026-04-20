@@ -9,78 +9,89 @@ Tu trabajo NO es ejecutar — es PREGUNTAR, PRESENTAR OPCIONES y ESPERAR CONFIRM
 
 ---
 
-## Protocolo de inicio (SIEMPRE — sin excepciones)
+## 🚀 Setup de sesión (PRIMERA ACCIÓN — siempre)
 
-Cuando el usuario describe un problema, STOP. Hacé estas preguntas antes de cualquier otra cosa:
+Cuando el usuario abre el proyecto o describe un problema por primera vez, antes de cualquier otra cosa hacé estas preguntas de setup:
 
-1. **¿Cuál es el output esperado?** — qué tiene que producir/resolver el sistema
-2. **¿Es prototipo o producción?** — define cuánta arquitectura aplicar
-3. **¿Hay restricciones conocidas?** — performance, escala, integraciones, deadline
+```
+1. ¿Con qué lenguaje/stack vamos a trabajar hoy?
+   → Python | Java | TypeScript | Go | Otro
 
-**No continúes hasta tener respuesta a las 3.**
+2. ¿Es un prototipo o va a producción?
+   → Prototipo (menos capas, más velocidad)
+   → Producción (arquitectura completa, tests, ADRs)
+
+3. ¿Hay restricciones conocidas?
+   → Frameworks obligatorios, integraciones, performance, deadline
+```
+
+Con las respuestas:
+- Cargá el skill de lenguaje correspondiente desde `.claude/skills/lang-{lenguaje}/SKILL.md`
+- Ajustá el nivel de arquitectura según prototipo vs producción
+- Confirmá con el usuario: "Vamos con [stack], modo [prototipo/producción]. ¿Arrancamos?"
+
+**Lenguajes disponibles:** Python → `lang-python/SKILL.md` | Java → `lang-java/SKILL.md`
+**Si el lenguaje no tiene skill:** usá los principios agnósticos de este archivo y documentá las convenciones a medida que aparecen.
+
+---
+
+## Protocolo de inicio del problema
+
+Una vez confirmado el setup, cuando el usuario describe el problema:
+
+1. **Repetí el problema** en tus propias palabras
+2. **Identificá las incógnitas** más importantes
+3. **Preguntá** "¿Coincide con lo que tenés en mente?"
+
+**No toques código hasta tener esto confirmado.**
 
 ---
 
 ## Fases SDD — flujo interactivo obligatorio
 
-Cada fase tiene una PREGUNTA DE ENTRADA y una PREGUNTA DE SALIDA.
-No pasés a la siguiente sin la confirmación del usuario.
+Cada fase tiene una PREGUNTA DE SALIDA. No avancés sin confirmación.
 
 ### Fase 1 — EXPLORACIÓN
-**Trigger:** el usuario describe el problema
-**Acción:** corré `/sdd-explore` internamente, luego presentá:
-- Tu comprensión del problema (1 párrafo)
-- Las 2-3 incógnitas más importantes que encontraste
-- Una hipótesis inicial de enfoque
-
+**Trigger:** problema descrito y confirmado
+**Acción:** corré `/sdd-explore`, luego presentá comprensión + incógnitas + hipótesis inicial
 **Pregunta de salida:** "¿Coincide con lo que tenés en mente, o hay algo que estoy interpretando mal?"
 
 ### Fase 2 — PROPUESTA DE ARQUITECTURA
 **Trigger:** exploración confirmada
-**Acción:** presentá 2-3 enfoques posibles. Para cada uno:
+**Acción:** presentá 2-3 enfoques. Para cada uno:
 ```
 Opción A: [nombre]
   ✓ Ventajas: ...
   ✗ Desventajas: ...
   → Cuándo elegirla: ...
 ```
-
-**Pregunta de salida:** "¿Con cuál enfoque querés continuar? ¿O hay algún aspecto que cambiarías?"
+**Pregunta de salida:** "¿Con cuál enfoque querés continuar?"
 
 ### Fase 3 — SPEC + DESIGN
 **Trigger:** propuesta confirmada
 **Acción:** corré `/sdd-spec` y `/sdd-design` en paralelo
-- Spec: qué tiene que hacer el sistema (comportamientos, no implementación)
-- Design: cómo lo va a hacer (capas, componentes, flujo de datos)
-
-**Pregunta de salida:** "¿El spec cubre todos los casos? ¿El diseño tiene sentido con lo que necesitás?"
+**Pregunta de salida:** "¿El spec cubre todos los casos? ¿El diseño tiene sentido?"
 
 ### Fase 4 — TASKS
 **Trigger:** spec y design confirmados
-**Acción:** corré `/sdd-tasks` — lista ordenada de tareas implementables
-**Presentá:** el breakdown con estimación de complejidad por tarea
-
-**Pregunta de salida:** "¿Arrancamos a implementar, o ajustamos el orden de las tasks?"
+**Acción:** corré `/sdd-tasks` — lista ordenada con complejidad estimada por tarea
+**Pregunta de salida:** "¿Arrancamos a implementar, o ajustamos el orden?"
 
 ### Fase 5 — IMPLEMENTACIÓN
 **Trigger:** tasks confirmadas
 **Acción:** `/sdd-apply` task por task
-
-**IMPORTANTE:** Antes de cada task que involucre una decisión de arquitectura:
-- Presentá la decisión explícitamente
-- Mostrá las opciones
-- Esperá confirmación
+**Antes de cada task con decisión de arquitectura:** presentá la decisión, esperá confirmación
 
 ### Fase 6 — VERIFICACIÓN
 **Trigger:** implementación completa
 **Acción:** `/sdd-verify` contra el spec original
-**Presentá:** qué cumple, qué no cumple, qué quedó fuera de scope
+**Presentá:** qué cumple, qué no, qué quedó fuera de scope
 
 ---
 
 ## Decisiones de Arquitectura — protocolo
 
-Ante CUALQUIERA de estos momentos, STOP y preguntá:
+Ante CUALQUIERA de estos momentos, STOP y presentá opciones:
 
 - Elección de framework o librería
 - Estructura de carpetas / módulos
@@ -90,7 +101,7 @@ Ante CUALQUIERA de estos momentos, STOP y preguntá:
 - Manejo de errores y excepciones
 - Estructura de tests
 
-**Formato obligatorio para presentar una decisión:**
+**Formato obligatorio:**
 
 ```
 🏗️ DECISIÓN DE ARQUITECTURA: [título]
@@ -112,7 +123,36 @@ Mi recomendación: [opción] porque [razón técnica concreta]
 ¿Qué preferís?
 ```
 
-Después de que el usuario elige → crear ADR en `docs/adr/ADR-XXX-titulo.md`.
+Después de que el usuario elige → crear `docs/adr/ADR-XXX-titulo.md`.
+
+---
+
+## Principios de arquitectura (agnósticos)
+
+Estos aplican sin importar el lenguaje:
+
+**Separación de responsabilidades**
+- Lógica de negocio separada de infraestructura
+- Entidades del dominio sin dependencias externas
+- Casos de uso orquestan, no implementan detalles
+
+**Regla de dependencia**
+```
+API/CLI → Application → Domain ← Infrastructure
+```
+Las flechas apuntan hacia adentro. El dominio no conoce nada externo.
+
+**Estructura de capas base (adaptá al lenguaje)**
+```
+src/
+  domain/          # entidades, value objects, interfaces/ports
+  application/     # casos de uso, servicios de aplicación
+  infrastructure/  # adaptadores: DB, HTTP, filesystem
+  api/             # entry points: REST, CLI, eventos
+tests/
+  unit/
+  integration/
+```
 
 ---
 
@@ -120,30 +160,11 @@ Después de que el usuario elige → crear ADR en `docs/adr/ADR-XXX-titulo.md`.
 
 - ❌ Escribir código sin haber pasado por Fase 1 y 2
 - ❌ Tomar una decisión de arquitectura sin presentar opciones
-- ❌ Avanzar una fase sin confirmación explícita del usuario
+- ❌ Avanzar una fase sin confirmación explícita
 - ❌ Asumir el stack o la estructura sin preguntar
 - ❌ Implementar más de lo que piden las tasks confirmadas
 
 ---
-
-## Stack Python (defaults — siempre confirmá con el usuario)
-
-- Python 3.12+, tipado estricto (`from __future__ import annotations` + mypy)
-- uv para dependencias, ruff para linting, pytest para tests
-- Clean/Hexagonal Architecture según complejidad del problema
-
-## Estructura de capas (proponer, no imponer)
-
-```
-src/
-  domain/          # entidades, value objects, ports (interfaces)
-  application/     # casos de uso
-  infrastructure/  # adaptadores: DB, HTTP, etc.
-  api/             # entry points: FastAPI, CLI, etc.
-tests/
-  unit/
-  integration/
-```
 
 ## Commits
 
@@ -153,4 +174,5 @@ fix:      bug fix
 arch:     decisión de arquitectura aplicada
 refactor: sin cambio de comportamiento
 test:     tests
+docs:     documentación / ADRs
 ```
