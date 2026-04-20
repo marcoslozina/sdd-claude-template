@@ -99,7 +99,7 @@ jobs:
 
       - run: echo "Configurar security scan según el stack"
 
-  # ── 5. Build (solo en main) ───────────────────────────────────
+  # ── 5. Build (solo en main, solo si existe Dockerfile) ──────────
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -108,11 +108,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Check for Dockerfile
+        id: dockerfile_check
+        run: |
+          if [ -f "Dockerfile" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Dockerfile encontrado"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️  Sin Dockerfile — step de build omitido"
+          fi
+
       - name: Build Docker image
+        if: steps.dockerfile_check.outputs.exists == 'true'
         run: |
           docker build -t app:${{ github.sha }} .
           echo "Image built: app:${{ github.sha }}"
 
       # Descomentar para push a registry:
       # - name: Push to ECR / GHCR
+      #   if: steps.dockerfile_check.outputs.exists == 'true'
       #   run: docker push app:${{ github.sha }}
