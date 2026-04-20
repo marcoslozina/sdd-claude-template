@@ -39,6 +39,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
+          pip install -q anthropic
           python3 - <<'EOF' > description.txt
           import anthropic, os
 

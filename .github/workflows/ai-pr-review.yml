@@ -36,6 +36,7 @@ jobs:
         run: |
           DIFF=$(cat pr_diff.txt)
 
+          pip install -q anthropic
           REVIEW=$(python3 - <<'EOF'
           import anthropic, os, sys
 

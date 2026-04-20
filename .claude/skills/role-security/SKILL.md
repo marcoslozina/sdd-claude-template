@@ -62,8 +62,8 @@ logger.info(f"Login attempt: user_id={user_id} success={success}")
 
 ```bash
 # ❌ Nunca en código
-API_KEY = "sk-prod-abc123"
-DATABASE_URL = "postgres://user:pass@host/db"
+API_KEY = "<secret-key-here>"
+DATABASE_URL = "postgres://<user>:<pass>@<host>/<db>"
 
 # ✅ Siempre en env vars
 import os

@@ -44,6 +44,7 @@ jobs:
             'build.gradle*' 'pom.xml' \
             'package.json' 'go.mod' | head -c 5000)
 
+          pip install -q anthropic
           python3 - <<'EOF' > arch_result.txt
           import anthropic, os, sys
 

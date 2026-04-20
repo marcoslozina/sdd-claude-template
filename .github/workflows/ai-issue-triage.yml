@@ -18,6 +18,7 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
+          pip install -q anthropic
           python3 - <<'EOF' > triage.json
           import anthropic, os, json
 
