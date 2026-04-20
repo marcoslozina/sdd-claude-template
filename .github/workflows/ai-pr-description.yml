@@ -11,6 +11,7 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
+      models: read
 
     # Solo si la descripción está vacía o tiene menos de 50 caracteres
     steps:
