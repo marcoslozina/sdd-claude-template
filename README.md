@@ -253,6 +253,68 @@ Cada workflow tiene el prompt del sistema en el paso de Python — editá el con
 
 ---
 
+## Pre-commit hooks
+
+Detecta problemas **antes de commitear** — no cuando ya rompiste el CI.
+
+```bash
+pip install pre-commit
+
+# Instalar ambos hooks
+pre-commit install                          # formato y secrets en cada commit
+pre-commit install --hook-type commit-msg   # conventional commits
+```
+
+### Qué corre en cada commit
+
+| Hook | Lenguaje | Qué hace |
+|------|----------|----------|
+| `detect-private-key` | todos | bloquea si detecta un private key |
+| `gitleaks` | todos | escanea secrets con entropía |
+| `ruff` + `ruff-format` | Python | lint + formato automático |
+| `prettier` | TS / JS / JSON / MD | formato automático |
+| `gofmt` + `go-vet` | Go | formato + análisis estático |
+| `pretty-format-java` | Java | google-java-format automático |
+| `conventional-pre-commit` | todos (commit-msg) | valida formato del mensaje |
+
+### Conventional Commits — tipos válidos
+
+```
+feat      nueva funcionalidad
+fix       corrección de bug
+docs      solo documentación
+style     formato (sin cambio lógico)
+refactor  refactor sin fix ni feature
+test      tests
+chore     mantenimiento (deps, config)
+perf      mejora de performance
+ci        cambios en CI/CD
+build     sistema de build
+revert    revertir un commit
+```
+
+**Ejemplos:**
+```bash
+git commit -m "feat(auth): add JWT refresh token rotation"
+git commit -m "fix(api): handle null response from payment gateway"
+git commit -m "chore(deps): bump ruff to 0.4.4"
+```
+
+---
+
+## CODEOWNERS
+
+`CODEOWNERS` define qué miembros del equipo deben aprobar cambios en partes críticas del repo. GitHub lo usa para requerir reviews automáticamente.
+
+Editá el archivo `CODEOWNERS` en la raíz y reemplazá `@tech-lead`, `@security-lead`, `@devops-lead` con los usernames reales del equipo.
+
+Para que funcione activá en branch protection:
+```
+✅ Require review from Code Owners
+```
+
+---
+
 ## Reglas de seguridad
 
 El template tiene reglas que se aplican siempre, sin excepciones:
