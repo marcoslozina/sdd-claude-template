@@ -74,6 +74,15 @@ El asistente no avanza una fase sin tu confirmación. Ante cada decisión de arq
 | `role-frontend` | React, Container/Presentational, estado, a11y, performance |
 | `role-code-review` | Checklist por capa, OWASP, privacidad, señales de mal diseño |
 
+### UX/UI y diseño responsable
+
+| Skill | Cubre |
+|-------|-------|
+| `role-ux` | Jobs-to-be-done, flujos, arquitectura de información, empty/error/loading states, onboarding |
+| `role-ui` | Design tokens, tipografía, color semántico, dark mode, estados de componentes, sistema 4pt |
+| `role-accessibility` | WCAG 2.2 AA, ARIA, foco y teclado, formularios accesibles, testing con screen readers |
+| `role-responsible-design` | Dark patterns, diseño ético de IA, privacidad en UX, bienestar digital, lenguaje inclusivo |
+
 ### Calidad y operaciones
 
 | Skill | Cubre |

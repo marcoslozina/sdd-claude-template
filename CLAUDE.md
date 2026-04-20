@@ -99,6 +99,10 @@ Con las respuestas:
 | Arquitectura | `role-architect/SKILL.md` | Siempre |
 | Backend | `role-backend/SKILL.md` | API REST / GraphQL |
 | Frontend | `role-frontend/SKILL.md` | Hay UI / React |
+| UX Design | `role-ux/SKILL.md` | Flujos, arquitectura de información, onboarding |
+| UI Design | `role-ui/SKILL.md` | Design tokens, componentes, responsive |
+| Accesibilidad | `role-accessibility/SKILL.md` | WCAG 2.2, ARIA, teclado, lectores de pantalla |
+| Diseño Responsable | `role-responsible-design/SKILL.md` | Dark patterns, IA ética, privacidad en UX |
 | Code Review | `role-code-review/SKILL.md` | Revisar código existente |
 | Seguridad | `role-security/SKILL.md` | Authn, authz, datos sensibles |
 | Testing | `role-testing/SKILL.md` | Estrategia de tests |
