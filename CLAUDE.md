@@ -103,6 +103,8 @@ Con las respuestas:
 | UI Design | `role-ui/SKILL.md` | Design tokens, componentes, responsive |
 | Accesibilidad | `role-accessibility/SKILL.md` | WCAG 2.2, ARIA, teclado, lectores de pantalla |
 | Diseño Responsable | `role-responsible-design/SKILL.md` | Dark patterns, IA ética, privacidad en UX |
+| Requirements | `role-requirements/SKILL.md` | Example Mapping, criterios de aceptación, PRD mínimo, DoR/DoD |
+| DDD | `role-ddd/SKILL.md` | Lenguaje ubicuo, Event Storming, Aggregates, Bounded Contexts |
 | Code Review | `role-code-review/SKILL.md` | Revisar código existente |
 | SOLID / Clean Code | `role-solid/SKILL.md` | SOLID, DRY/KISS/YAGNI, design patterns, code smells |
 | App Performance | `role-app-performance/SKILL.md` | Profiling, Big O, caché, indexing, memory, pooling |

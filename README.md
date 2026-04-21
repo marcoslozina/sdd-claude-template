@@ -65,6 +65,13 @@ El asistente no avanza una fase sin tu confirmación. Ante cada decisión de arq
 | `lang-typescript` | TypeScript estricto, React, Node.js, Zod, Vitest |
 | `lang-go` | Go 1.22+, stdlib, Chi, interfaces pequeñas, testcontainers |
 
+### Product Engineering
+
+| Skill | Cubre |
+|-------|-------|
+| `role-requirements` | Example Mapping, Given/When/Then, PRD mínimo, DoR/DoD, señales de requisitos problemáticos |
+| `role-ddd` | Lenguaje ubicuo, Event Storming, Aggregates, Value Objects, Bounded Contexts, Context Map |
+
 ### Arquitectura y diseño
 
 | Skill | Cubre |
