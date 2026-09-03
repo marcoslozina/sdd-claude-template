@@ -60,7 +60,7 @@ All notable changes to this project will be documented here.
 ### Fixed
 - Add models: read permission for GitHub Models access.
 - Install anthropic before python scripts and fix gitleaks false positive.
-- Make docker build conditional on Dockerfile existence. 
+- Make docker build conditional on Dockerfile existence.
 
 ### Security
 - Add privacy skill, harden settings (deny git push), secret detection rules in CLAUDE.md and code-review.
