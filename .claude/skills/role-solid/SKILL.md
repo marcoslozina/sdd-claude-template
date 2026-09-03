@@ -1,32 +1,37 @@
-# Skill: SOLID, Clean Code y Design Patterns
+---
+name: role-solid
+description: SOLID principles, clean code, and design patterns with cross-language examples - DRY/KISS/YAGNI, code smells and their refactorings, creational/structural/behavioral patterns, complexity thresholds, and a code review checklist. Use when reviewing or refactoring classes and modules, untangling duplicated logic, or when tests are hard to write.
+---
 
-## Rol
-Escribir código que comunica intención, resiste el cambio y no necesita comentarios para entenderse.
-El código limpio no es el que funciona — es el que el siguiente desarrollador puede cambiar sin miedo.
+# Skill: SOLID, Clean Code and Design Patterns
 
-## Cuándo activar este skill
-- Code review de cualquier clase o módulo
-- Se detecta una clase con más de una razón para cambiar
-- Hay duplicación de lógica entre módulos
-- Un cambio en un lugar rompe otro lugar no relacionado
-- Los tests son difíciles de escribir (señal de mal diseño)
+## Role
+Write code that communicates intent, withstands change, and needs no comments to be understood.
+Clean code is not code that works — it is code the next developer can change without fear.
+
+## When to activate this skill
+- Code review of any class or module
+- A class is found to have more than one reason to change
+- There is duplicated logic across modules
+- A change in one place breaks another unrelated place
+- Tests are hard to write (a sign of bad design)
 
 ---
 
-## SOLID — principios con ejemplos reales
+## SOLID — principles with real examples
 
 ### S — Single Responsibility
-Una clase tiene una sola razón para cambiar.
+A class has a single reason to change.
 
 ```python
-# ❌ Viola SRP: procesa, valida Y envía
+# ❌ Violates SRP: processes, validates AND sends
 class OrderService:
     def process(self, order):
-        if order.total < 0: raise ValueError()  # validación
-        self.db.save(order)                       # persistencia
-        self.email.send(order.user, "confirmed")  # notificación
+        if order.total < 0: raise ValueError()  # validation
+        self.db.save(order)                       # persistence
+        self.email.send(order.user, "confirmed")  # notification
 
-# ✅ Cada responsabilidad en su lugar
+# ✅ Each responsibility in its own place
 class OrderValidator: ...
 class OrderRepository: ...
 class OrderNotifier: ...
@@ -38,46 +43,46 @@ class OrderService:
 ```
 
 ### O — Open/Closed
-Abierto para extensión, cerrado para modificación.
+Open for extension, closed for modification.
 
 ```typescript
-// ❌ Cada nuevo tipo de descuento modifica la función
+// ❌ Every new discount type modifies the function
 function applyDiscount(order: Order, type: string): number {
   if (type === 'percentage') return order.total * 0.9
   if (type === 'fixed') return order.total - 10
-  // nuevo tipo = modificar esta función
+  // new type = modify this function
 }
 
-// ✅ Extensión sin modificación
+// ✅ Extension without modification
 interface DiscountStrategy {
   apply(total: number): number
 }
 class PercentageDiscount implements DiscountStrategy { ... }
 class FixedDiscount implements DiscountStrategy { ... }
-// nuevo tipo = nueva clase, nada se toca
+// new type = new class, nothing else is touched
 ```
 
 ### L — Liskov Substitution
-Un subtipo debe poder reemplazar a su supertipo sin romper el programa.
+A subtype must be able to replace its supertype without breaking the program.
 
 ```java
-// ❌ Viola LSP: Square rompe el contrato de Rectangle
+// ❌ Violates LSP: Square breaks the Rectangle contract
 class Rectangle { setWidth(w); setHeight(h); area() }
 class Square extends Rectangle {
-  setWidth(w) { super.setWidth(w); super.setHeight(w); } // sorpresa
+  setWidth(w) { super.setWidth(w); super.setHeight(w); } // surprise
 }
 
-// ✅ Modela correctamente sin herencia forzada
+// ✅ Models it correctly without forced inheritance
 interface Shape { area(): double }
 class Rectangle implements Shape { ... }
 class Square implements Shape { ... }
 ```
 
 ### I — Interface Segregation
-Ningún cliente debe depender de métodos que no usa.
+No client should depend on methods it does not use.
 
 ```go
-// ❌ Interfaz gorda: FileWriter obliga a implementar Read y Seek
+// ❌ Fat interface: FileWriter is forced to implement Read and Seek
 type Storage interface {
     Read(key string) ([]byte, error)
     Write(key string, data []byte) error
@@ -85,25 +90,25 @@ type Storage interface {
     Delete(key string) error
 }
 
-// ✅ Interfaces pequeñas y focalizadas
+// ✅ Small, focused interfaces
 type Writer interface { Write(key string, data []byte) error }
 type Reader interface { Read(key string) ([]byte, error) }
 type Deleter interface { Delete(key string) error }
 ```
 
 ### D — Dependency Inversion
-Módulos de alto nivel no dependen de módulos de bajo nivel. Ambos dependen de abstracciones.
+High-level modules do not depend on low-level modules. Both depend on abstractions.
 
 ```typescript
-// ❌ Use case acoplado a implementación concreta
+// ❌ Use case coupled to a concrete implementation
 class CreateUserUseCase {
-  constructor(private repo: PostgresUserRepository) {} // infraestructura en el dominio
+  constructor(private repo: PostgresUserRepository) {} // infrastructure inside the domain
 }
 
-// ✅ Depende de la abstracción (port)
+// ✅ Depends on the abstraction (port)
 interface UserRepository { save(user: User): Promise<void> }
 class CreateUserUseCase {
-  constructor(private repo: UserRepository) {} // el dominio define el contrato
+  constructor(private repo: UserRepository) {} // the domain defines the contract
 }
 ```
 
@@ -111,76 +116,76 @@ class CreateUserUseCase {
 
 ## DRY, KISS, YAGNI
 
-| Principio | Regla | Cuándo viola |
+| Principle | Rule | When it's violated |
 |-----------|-------|--------------|
-| **DRY** — Don't Repeat Yourself | La lógica tiene una sola representación autorizada | Copy-paste de lógica, no de estructura |
-| **KISS** — Keep It Simple | La solución más simple que funciona | Over-engineering, abstracciones prematuras |
-| **YAGNI** — You Aren't Gonna Need It | No implementes lo que no necesitás ahora | "Por si acaso", "en el futuro" |
+| **DRY** — Don't Repeat Yourself | Logic has a single authoritative representation | Copy-paste of logic, not of structure |
+| **KISS** — Keep It Simple | The simplest solution that works | Over-engineering, premature abstractions |
+| **YAGNI** — You Aren't Gonna Need It | Don't implement what you don't need now | "Just in case", "in the future" |
 
-> DRY no es "no repetir código" — es "no repetir CONOCIMIENTO". Dos funciones con código similar pero lógica diferente NO son violación de DRY.
+> DRY is not "don't repeat code" — it is "don't repeat KNOWLEDGE". Two functions with similar code but different logic are NOT a DRY violation.
 
 ---
 
-## Code smells — señales de mal diseño
+## Code smells — signs of bad design
 
-| Smell | Síntoma | Refactor |
+| Smell | Symptom | Refactor |
 |-------|---------|----------|
-| **God Object** | Clase con 500+ líneas y 20 métodos | Dividir por responsabilidad |
-| **Feature Envy** | Método que usa más datos de otra clase que los propios | Mover el método a esa clase |
-| **Data Clump** | Grupo de variables que siempre viajan juntas | Extraer Value Object |
-| **Primitive Obsession** | `String email`, `String phone`, `int age` sin tipos | Crear tipos semánticos |
-| **Long Parameter List** | Función con 5+ parámetros | Extraer objeto de configuración |
-| **Shotgun Surgery** | Un cambio toca 10 archivos | Consolidar responsabilidad |
-| **Divergent Change** | Una clase cambia por razones distintas frecuentemente | Separar en dos clases |
-| **Dead Code** | Código comentado, métodos no llamados | Eliminar sin piedad |
+| **God Object** | Class with 500+ lines and 20 methods | Split by responsibility |
+| **Feature Envy** | A method that uses more data from another class than its own | Move the method to that class |
+| **Data Clump** | A group of variables that always travel together | Extract a Value Object |
+| **Primitive Obsession** | `String email`, `String phone`, `int age` with no types | Create semantic types |
+| **Long Parameter List** | Function with 5+ parameters | Extract a configuration object |
+| **Shotgun Surgery** | One change touches 10 files | Consolidate responsibility |
+| **Divergent Change** | One class frequently changes for different reasons | Split into two classes |
+| **Dead Code** | Commented-out code, methods never called | Delete without mercy |
 
 ---
 
-## Design Patterns — cuándo usarlos
+## Design Patterns — when to use them
 
-### Creacionales
-| Pattern | Cuándo | Problema que resuelve |
+### Creational
+| Pattern | When | Problem it solves |
 |---------|--------|----------------------|
-| **Factory Method** | Crear objetos sin especificar la clase exacta | Desacoplar creación de uso |
-| **Builder** | Objeto complejo con muchos parámetros opcionales | Evitar constructores con 8 args |
-| **Singleton** | Una sola instancia global (con precaución) | Config, logger, connection pool |
+| **Factory Method** | Create objects without specifying the exact class | Decouple creation from use |
+| **Builder** | Complex object with many optional parameters | Avoid constructors with 8 args |
+| **Singleton** | A single global instance (with caution) | Config, logger, connection pool |
 
-### Estructurales
-| Pattern | Cuándo | Problema que resuelve |
+### Structural
+| Pattern | When | Problem it solves |
 |---------|--------|----------------------|
-| **Adapter** | Integrar interfaz incompatible | Wrappear API externa al dominio |
-| **Decorator** | Agregar comportamiento sin modificar clase | Logging, caching, retry transparentes |
-| **Facade** | Simplificar subsistema complejo | API pública sobre lógica interna |
+| **Adapter** | Integrate an incompatible interface | Wrap an external API for the domain |
+| **Decorator** | Add behavior without modifying the class | Transparent logging, caching, retry |
+| **Facade** | Simplify a complex subsystem | Public API over internal logic |
 
-### Comportamiento
-| Pattern | Cuándo | Problema que resuelve |
+### Behavioral
+| Pattern | When | Problem it solves |
 |---------|--------|----------------------|
-| **Strategy** | Algoritmos intercambiables | Eliminar if/else de tipo |
-| **Observer** | Notificar cambios sin acoplamiento | Eventos de dominio |
-| **Command** | Encapsular operaciones como objetos | Undo/redo, colas de trabajo |
-| **Chain of Responsibility** | Pipeline de procesamiento | Middlewares, validaciones en cadena |
+| **Strategy** | Interchangeable algorithms | Remove type-based if/else |
+| **Observer** | Notify changes without coupling | Domain events |
+| **Command** | Encapsulate operations as objects | Undo/redo, work queues |
+| **Chain of Responsibility** | Processing pipeline | Middlewares, chained validations |
 
 ---
 
-## Métricas de complejidad
+## Complexity metrics
 
-| Métrica | Umbral saludable | Acción si supera |
+| Metric | Healthy threshold | Action if exceeded |
 |---------|-----------------|------------------|
-| **Complejidad ciclomática** | ≤ 10 por función | Extraer funciones |
-| **Líneas por función** | ≤ 20 | Dividir responsabilidades |
-| **Líneas por clase** | ≤ 200 | Revisar SRP |
-| **Parámetros por función** | ≤ 3 | Extraer objeto |
-| **Profundidad de anidamiento** | ≤ 3 niveles | Early return / extraer |
+| **Cyclomatic complexity** | ≤ 10 per function | Extract functions |
+| **Lines per function** | ≤ 20 | Split responsibilities |
+| **Lines per class** | ≤ 200 | Review SRP |
+| **Parameters per function** | ≤ 3 | Extract an object |
+| **Nesting depth** | ≤ 3 levels | Early return / extract |
 
 ---
 
-## Checklist de code review
+## Code review checklist
 
-- [ ] ¿Cada clase tiene una sola razón para cambiar?
-- [ ] ¿Las interfaces son pequeñas y focalizadas?
-- [ ] ¿Los use cases dependen de abstracciones, no implementaciones?
-- [ ] ¿Hay lógica duplicada que debería extraerse?
-- [ ] ¿El nombre de cada clase/función comunica exactamente qué hace?
-- [ ] ¿Hay código comentado o métodos no usados?
-- [ ] ¿Los parámetros primitivos podrían ser Value Objects?
-- [ ] ¿Los tests son fáciles de escribir? (si no, el diseño es el problema)
+- [ ] Does each class have a single reason to change?
+- [ ] Are the interfaces small and focused?
+- [ ] Do the use cases depend on abstractions, not implementations?
+- [ ] Is there duplicated logic that should be extracted?
+- [ ] Does each class/function name communicate exactly what it does?
+- [ ] Is there commented-out code or unused methods?
+- [ ] Could the primitive parameters be Value Objects?
+- [ ] Are the tests easy to write? (if not, the design is the problem)

@@ -1,53 +1,58 @@
+---
+name: infra-aws
+description: AWS architecture standards - service selection (Lambda/ECS/EC2, S3, DynamoDB, RDS, SQS/SNS/EventBridge), CDK patterns, least-privilege IAM, reference architectures, cost red flags, and a security checklist. Use when designing or reviewing AWS infrastructure, writing CDK/Terraform/SAM code, or setting up IAM policies, VPCs, or serverless APIs.
+---
+
 # Skill: AWS
 
-## Principios
-- Least privilege en IAM. Siempre.
-- Infraestructura como código (CDK preferido, Terraform si el equipo ya lo usa).
-- Nunca hardcodear credenciales. Usar IAM roles + Secrets Manager.
-- Diseñar para fallo: las cosas van a fallar, el sistema debe recuperarse.
+## Principles
+- Least privilege in IAM. Always.
+- Infrastructure as code (CDK preferred, Terraform if the team already uses it).
+- Never hardcode credentials. Use IAM roles + Secrets Manager.
+- Design for failure: things will break, the system must recover.
 
 ---
 
-## Servicios por categoría
+## Services by category
 
 ### Compute
-| Servicio | Cuándo usarlo |
+| Service | When to use it |
 |----------|---------------|
-| Lambda | Eventos, tasks cortas (< 15 min), escala a cero |
-| ECS Fargate | Containers sin gestionar EC2, workloads continuos |
-| EC2 | Control total, workloads con estado, GPU |
-| App Runner | Deploy de containers sin configurar ECS/ALB |
+| Lambda | Events, short tasks (< 15 min), scales to zero |
+| ECS Fargate | Containers without managing EC2, long-running workloads |
+| EC2 | Full control, stateful workloads, GPU |
+| App Runner | Deploy containers without configuring ECS/ALB |
 
 ### Storage
-| Servicio | Cuándo usarlo |
+| Service | When to use it |
 |----------|---------------|
-| S3 | Objetos, archivos estáticos, backups, data lake |
-| EBS | Disco persistente para EC2 |
-| EFS | Filesystem compartido entre instancias |
-| DynamoDB | Key-value / documentos, escala masiva, latencia baja |
-| RDS | SQL relacional (Postgres preferido) |
-| ElastiCache | Cache en memoria (Redis / Memcached) |
+| S3 | Objects, static files, backups, data lake |
+| EBS | Persistent disk for EC2 |
+| EFS | Shared filesystem across instances |
+| DynamoDB | Key-value / documents, massive scale, low latency |
+| RDS | Relational SQL (Postgres preferred) |
+| ElastiCache | In-memory cache (Redis / Memcached) |
 
 ### Networking
-| Servicio | Cuándo usarlo |
+| Service | When to use it |
 |----------|---------------|
-| ALB | Load balancer HTTP/HTTPS con routing por path/host |
-| API Gateway | APIs REST/HTTP/WebSocket serverless |
-| CloudFront | CDN global, edge caching |
+| ALB | HTTP/HTTPS load balancer with path/host routing |
+| API Gateway | Serverless REST/HTTP/WebSocket APIs |
+| CloudFront | Global CDN, edge caching |
 | Route 53 | DNS, health checks, failover |
-| VPC | Red privada, subnets públicas/privadas, security groups |
+| VPC | Private network, public/private subnets, security groups |
 
-### Mensajería
-| Servicio | Cuándo usarlo |
+### Messaging
+| Service | When to use it |
 |----------|---------------|
-| SQS | Cola de mensajes, desacoplamiento, retry automático |
-| SNS | Fan-out pub/sub, notificaciones |
-| EventBridge | Event bus, reglas de enrutamiento de eventos |
-| Kinesis | Streaming de datos en tiempo real |
+| SQS | Message queue, decoupling, automatic retry |
+| SNS | Fan-out pub/sub, notifications |
+| EventBridge | Event bus, event routing rules |
+| Kinesis | Real-time data streaming |
 
 ---
 
-## CDK — patrones base (TypeScript)
+## CDK — base patterns (TypeScript)
 
 ```typescript
 import * as cdk from 'aws-cdk-lib'
@@ -58,7 +63,7 @@ export class AppStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
 
-    // Cola SQS con DLQ
+    // SQS queue with DLQ
     const dlq = new sqs.Queue(this, 'DLQ', {
       retentionPeriod: cdk.Duration.days(14),
     })
@@ -68,7 +73,7 @@ export class AppStack extends cdk.Stack {
       deadLetterQueue: { queue: dlq, maxReceiveCount: 3 },
     })
 
-    // Lambda con permisos mínimos
+    // Lambda with minimal permissions
     const fn = new lambda.Function(this, 'Handler', {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: 'index.handler',
@@ -85,38 +90,38 @@ export class AppStack extends cdk.Stack {
 
 ---
 
-## IAM — reglas de oro
+## IAM — golden rules
 
 ```typescript
-// ✅ Least privilege: solo lo que necesita
+// ✅ Least privilege: only what it needs
 fn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['s3:GetObject'],
   resources: [`${bucket.bucketArn}/uploads/*`],
 }))
 
-// ❌ Nunca esto
+// ❌ Never this
 fn.addToRolePolicy(new iam.PolicyStatement({
   actions: ['s3:*'],
   resources: ['*'],
 }))
 ```
 
-- Un rol por servicio/función
-- Nunca `*` en Actions ni Resources en producción
-- Rotar access keys. Preferir roles sobre keys cuando sea posible
-- Activar MFA en cuentas con permisos elevados
+- One role per service/function
+- Never `*` in Actions or Resources in production
+- Rotate access keys. Prefer roles over keys whenever possible
+- Enable MFA on accounts with elevated permissions
 
 ---
 
-## Arquitecturas comunes
+## Common architectures
 
-### API Serverless
+### Serverless API
 ```
 Route 53 → CloudFront → API Gateway → Lambda → DynamoDB
                                              → RDS Proxy → RDS
 ```
 
-### Microservicio containerizado
+### Containerized microservice
 ```
 ALB → ECS Fargate → RDS (Postgres)
                  → ElastiCache (Redis)
@@ -132,35 +137,35 @@ S3 (raw) → Lambda (trigger) → SQS → Lambda (process) → S3 (processed)
 
 ---
 
-## Costos — señales de alarma
+## Costs — red flags
 
-- Lambda con memory > 1GB para tasks simples → reducir o migrar a ECS
-- RDS siempre encendida con < 10% CPU → considerar Aurora Serverless v2
-- S3 sin lifecycle policies → datos crecen sin control
-- EC2 sin auto-scaling → sobreprovisionado en horas bajas
-- Sin Reserved Instances/Savings Plans para workloads predecibles → pagás on-demand de más
-
----
-
-## Checklist de seguridad AWS
-
-- [ ] VPC con subnets privadas para DB y compute
-- [ ] Security groups con mínimos puertos abiertos
-- [ ] Secrets en AWS Secrets Manager, no en env vars de Lambda
-- [ ] S3 buckets con Block Public Access activado
-- [ ] CloudTrail activo en todas las regiones
-- [ ] GuardDuty activo
-- [ ] Backups automáticos en RDS con retention > 7 días
-- [ ] Cifrado en reposo en S3, RDS, EBS
+- Lambda with memory > 1GB for simple tasks → reduce it or move to ECS
+- RDS always on with < 10% CPU → consider Aurora Serverless v2
+- S3 without lifecycle policies → data grows unchecked
+- EC2 without auto-scaling → over-provisioned during off-peak hours
+- No Reserved Instances/Savings Plans for predictable workloads → you're overpaying on-demand
 
 ---
 
-## Decisiones de arquitectura comunes en AWS
+## AWS security checklist
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+- [ ] VPC with private subnets for DB and compute
+- [ ] Security groups with the minimum ports open
+- [ ] Secrets in AWS Secrets Manager, not in Lambda env vars
+- [ ] S3 buckets with Block Public Access enabled
+- [ ] CloudTrail enabled in every region
+- [ ] GuardDuty enabled
+- [ ] Automatic RDS backups with retention > 7 days
+- [ ] Encryption at rest on S3, RDS, EBS
+
+---
+
+## Common architecture decisions on AWS
+
+Apply the decision protocol from CLAUDE.md when facing:
 - **Compute:** Lambda vs ECS Fargate vs EC2
 - **DB:** DynamoDB vs RDS vs Aurora Serverless
 - **API:** API Gateway vs ALB vs App Runner
 - **IaC:** CDK vs Terraform vs SAM
-- **Mensajería:** SQS vs EventBridge vs SNS
+- **Messaging:** SQS vs EventBridge vs SNS
 - **Cache:** ElastiCache Redis vs DynamoDB DAX vs CloudFront

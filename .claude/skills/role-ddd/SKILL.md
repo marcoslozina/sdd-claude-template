@@ -1,92 +1,97 @@
+---
+name: role-ddd
+description: Domain-Driven Design, tactical and strategic — ubiquitous language, Event Storming workshops, entities, value objects, aggregates, domain events and services, repositories as ports, bounded contexts and context maps, plus DDD anti-patterns. Use when modeling a business domain, naming entities, deciding aggregate boundaries, splitting a system into contexts or services, or fixing an anemic domain model.
+---
+
 # Skill: Domain-Driven Design (DDD)
 
-## Rol
-Construir software cuyo modelo refleja el negocio real, no la base de datos ni el framework.
-El código debe hablar el idioma del negocio — si un desarrollador y un experto del dominio
-leen el código y no entienden lo mismo, el modelo está mal.
+## Role
+Build software whose model reflects the real business, not the database or the framework.
+The code must speak the language of the business — if a developer and a domain expert
+read the code and don't understand the same thing, the model is wrong.
 
-## Cuándo activar este skill
-- El sistema tiene lógica de negocio no trivial
-- Hay múltiples equipos trabajando en el mismo sistema
-- Los términos del negocio y el código son diferentes ("order" en negocio = "transaction" en código)
-- El sistema crece y los cambios en un área rompen otras áreas no relacionadas
-- Fase de Exploración o Propuesta de Arquitectura en SDD
+## When to activate this skill
+- The system has non-trivial business logic
+- Multiple teams are working on the same system
+- The business terms and the code differ ("order" in the business = "transaction" in the code)
+- The system grows and changes in one area break unrelated areas
+- Exploration or Architecture Proposal phase in SDD
 
 ---
 
-## Lenguaje Ubicuo (Ubiquitous Language)
+## Ubiquitous Language
 
-El vocabulario del negocio y el código deben ser idénticos. Sin traducciones.
+The business vocabulary and the code must be identical. No translations.
 
 ```python
-# ❌ Lenguaje técnico desconectado del negocio
+# ❌ Technical language disconnected from the business
 class Transaction:
-    def execute(self): ...          # ¿qué significa "ejecutar"?
-    def update_status(self): ...    # ¿qué status? ¿por qué cambia?
+    def execute(self): ...          # what does "execute" mean?
+    def update_status(self): ...    # which status? why does it change?
 
-# ✅ Lenguaje del dominio
+# ✅ Domain language
 class Order:
-    def place(self): ...            # el negocio "coloca" un pedido
-    def confirm(self): ...          # el negocio "confirma" cuando hay stock
-    def cancel(self, reason): ...   # el negocio "cancela" con una razón
-    def fulfill(self): ...          # el negocio "despacha" cuando está listo
+    def place(self): ...            # the business "places" an order
+    def confirm(self): ...          # the business "confirms" when there's stock
+    def cancel(self, reason): ...   # the business "cancels" with a reason
+    def fulfill(self): ...          # the business "fulfills" when it's ready
 ```
 
-**Cómo construir el lenguaje ubicuo:**
-1. Reunirse con el experto del dominio (no solo el PM — el que conoce el negocio)
-2. Escuchar los términos que usan naturalmente
-3. Documentar el glosario — una definición por término, sin ambigüedad
-4. Si dos personas usan el mismo término para cosas distintas → hay dos conceptos, nombrarlos diferente
+**How to build the ubiquitous language:**
+1. Meet with the domain expert (not just the PM — the person who knows the business)
+2. Listen to the terms they use naturally
+3. Document the glossary — one definition per term, no ambiguity
+4. If two people use the same term for different things → there are two concepts, name them differently
 
 ---
 
-## Event Storming — descubrir el dominio
+## Event Storming — discovering the domain
 
-Event Storming es un workshop de 2-4 horas para mapear un dominio completo con todos los involucrados.
+Event Storming is a 2-4 hour workshop to map a complete domain with everyone involved.
 
-### Tipos de tarjetas (colores estándar)
+### Card types (standard colors)
 
 ```
-🟠 DOMAIN EVENT     → "Pedido confirmado", "Pago procesado", "Stock agotado"
-🔵 COMMAND          → "Confirmar pedido", "Procesar pago", "Reservar stock"
-🟡 AGGREGATE        → "Pedido", "Pago", "Inventario"
-🟣 POLICY           → "Cuando pago falla → notificar al usuario"
-🔴 HOTSPOT          → Dudas, conflictos, zonas de riesgo
-🟢 EXTERNAL SYSTEM  → "Pasarela de pago", "Servicio de email"
+🟠 DOMAIN EVENT     → "Order confirmed", "Payment processed", "Stock depleted"
+🔵 COMMAND          → "Confirm order", "Process payment", "Reserve stock"
+🟡 AGGREGATE        → "Order", "Payment", "Inventory"
+🟣 POLICY           → "When payment fails → notify the user"
+🔴 HOTSPOT          → Doubts, conflicts, risk zones
+🟢 EXTERNAL SYSTEM  → "Payment gateway", "Email service"
 ```
 
-### Protocolo de Event Storming
+### Event Storming protocol
 
-**Fase 1 — Caos creativo (20 min)**
-Todos escriben Domain Events en naranjado. Sin orden, sin discusión. Solo eventos.
-Formato obligatorio: **pasado participio** — "Pedido CONFIRMADO", no "Confirmar pedido".
+**Phase 1 — Creative chaos (20 min)**
+Everyone writes Domain Events on orange stickies. No order, no discussion. Events only.
+Mandatory format: **past participle** — "Order CONFIRMED", not "Confirm order".
 
-**Fase 2 — Ordenar la línea de tiempo (20 min)**
-Pegar los eventos en orden cronológico en una pared/miro.
-Identificar duplicados y conflictos.
+**Phase 2 — Order the timeline (20 min)**
+Stick the events in chronological order on a wall/miro board.
+Identify duplicates and conflicts.
 
-**Fase 3 — Commands y Aggregates (30 min)**
-Para cada evento, ¿qué comando lo causó? ¿Qué entidad lo procesa?
+**Phase 3 — Commands and Aggregates (30 min)**
+For each event, which command caused it? Which entity processes it?
 
-**Fase 4 — Policies (20 min)**
-¿Qué reacciones automáticas hay? "Cuando X ocurre → hacer Y"
+**Phase 4 — Policies (20 min)**
+What automatic reactions are there? "When X happens → do Y"
 
-**Fase 5 — Hotspots (10 min)**
-Marcar en rojo todo lo que genera discusión, duda o riesgo.
+**Phase 5 — Hotspots (10 min)**
+Mark in red everything that generates discussion, doubt, or risk.
 
-**Resultado:** mapa visual del dominio que todos entienden — business y tech.
+**Result:** a visual map of the domain that everyone understands — business and tech.
 
 ---
 
-## Building Blocks de DDD
+## DDD Building Blocks
 
 ### Entity
-Tiene identidad propia que persiste en el tiempo. Dos entidades con los mismos datos son distintas si tienen distinto ID.
+Has its own identity that persists over time. Two entities with the same data are different if they have different IDs.
 
 ```python
 @dataclass
 class Order:
-    id: OrderId          # identidad
+    id: OrderId          # identity
     customer_id: CustomerId
     items: list[OrderItem]
     status: OrderStatus
@@ -99,10 +104,10 @@ class Order:
 ```
 
 ### Value Object
-Sin identidad — se define por sus atributos. Inmutable. Dos Value Objects con los mismos datos SON el mismo objeto.
+No identity — defined by its attributes. Immutable. Two Value Objects with the same data ARE the same object.
 
 ```python
-@dataclass(frozen=True)  # inmutable
+@dataclass(frozen=True)  # immutable
 class Money:
     amount: Decimal
     currency: str
@@ -117,16 +122,16 @@ class Money:
         return Money(self.amount + other.amount, self.currency)
 
 # ✅ Money(100, "USD") == Money(100, "USD") → True
-# ✅ No tiene ID — es el valor, no una entidad
+# ✅ It has no ID — it is the value, not an entity
 ```
 
 ### Aggregate
-Cluster de entidades y value objects tratado como unidad. Tiene una raíz (Aggregate Root) que es el único punto de entrada.
+A cluster of entities and value objects treated as a unit. It has a root (Aggregate Root) that is the only entry point.
 
 ```python
 class Order:  # Aggregate Root
     def add_item(self, product_id: ProductId, quantity: int) -> None:
-        # La lógica de negocio vive aquí, no en el controller
+        # The business logic lives here, not in the controller
         if self.status != OrderStatus.DRAFT:
             raise OrderNotEditableError()
         item = OrderItem(product_id=product_id, quantity=quantity)
@@ -136,13 +141,13 @@ class Order:  # Aggregate Root
         return sum(item.subtotal() for item in self.items)
 ```
 
-**Reglas de Aggregates:**
-- Solo modificar el estado a través del Aggregate Root
-- No referenciar entidades internas de otro aggregate — solo por ID
-- Mantener el aggregate pequeño — si crece mucho, probablemente son dos aggregates
+**Aggregate rules:**
+- Only modify state through the Aggregate Root
+- Do not reference another aggregate's internal entities — only by ID
+- Keep the aggregate small — if it grows a lot, it's probably two aggregates
 
 ### Domain Event
-Algo significativo que ocurrió en el dominio. En tiempo pasado. Inmutable.
+Something significant that happened in the domain. In the past tense. Immutable.
 
 ```python
 @dataclass(frozen=True)
@@ -154,19 +159,19 @@ class OrderConfirmed:
 ```
 
 ### Domain Service
-Lógica de negocio que no pertenece a ninguna entidad específica.
+Business logic that doesn't belong to any specific entity.
 
 ```python
 class PricingService:
     def calculate_discount(self, order: Order, customer: Customer) -> Money:
-        # Lógica que involucra Order Y Customer — no pertenece a ninguno solo
+        # Logic that involves Order AND Customer — it doesn't belong to either alone
         if customer.is_premium() and order.total() > Money(1000, "USD"):
             return order.total() * Decimal("0.1")
         return Money(0, "USD")
 ```
 
 ### Repository (Port)
-Abstracción para persistir y recuperar aggregates. El dominio define la interfaz.
+An abstraction to persist and retrieve aggregates. The domain defines the interface.
 
 ```python
 class OrderRepository(Protocol):
@@ -179,36 +184,36 @@ class OrderRepository(Protocol):
 
 ## Bounded Contexts
 
-Un sistema grande tiene múltiples modelos, cada uno válido dentro de su contexto.
-El mismo concepto puede significar cosas distintas en contextos distintos.
+A large system has multiple models, each valid within its own context.
+The same concept can mean different things in different contexts.
 
 ```
-"Producto" en Catálogo:    nombre, descripción, imágenes, SEO
-"Producto" en Inventario:  SKU, stock, ubicación en almacén
-"Producto" en Facturación: precio, impuestos, código fiscal
+"Product" in Catalog:    name, description, images, SEO
+"Product" in Inventory:  SKU, stock, warehouse location
+"Product" in Billing:    price, taxes, tax code
 
-Son el MISMO producto en el negocio, pero MODELOS DISTINTOS en el software.
-No forzar un único modelo — crear uno por contexto.
+They are the SAME product in the business, but DIFFERENT MODELS in the software.
+Don't force a single model — create one per context.
 ```
 
-### Context Map — cómo se relacionan los contextos
+### Context Map — how the contexts relate
 
 ```
-[Catálogo] ──── Published Language ────▶ [Inventario]
-[Pedidos]  ──── Anti-Corruption Layer ──▶ [Pago externo]
-[Pedidos]  ◀─── Conformist ─────────────  [Logística]
+[Catalog]  ──── Published Language ────▶ [Inventory]
+[Orders]   ──── Anti-Corruption Layer ──▶ [External payment]
+[Orders]   ◀─── Conformist ─────────────  [Logistics]
 ```
 
-| Relación | Cuándo | Qué implica |
+| Relationship | When | What it implies |
 |----------|--------|-------------|
-| **Shared Kernel** | Equipo chico, contextos muy acoplados | Modelo compartido — coordinación obligatoria |
-| **Customer/Supplier** | Un contexto depende del otro | El supplier se adapta a las necesidades del customer |
-| **Anti-Corruption Layer** | Integración con sistema externo o legacy | Traducir el modelo externo al interno — nunca dejar que contamine |
-| **Published Language** | API pública consumida por muchos | Contrato estable y versionado |
+| **Shared Kernel** | Small team, tightly coupled contexts | Shared model — coordination is mandatory |
+| **Customer/Supplier** | One context depends on the other | The supplier adapts to the customer's needs |
+| **Anti-Corruption Layer** | Integration with an external or legacy system | Translate the external model into the internal one — never let it contaminate |
+| **Published Language** | Public API consumed by many | Stable, versioned contract |
 
 ---
 
-## Integración con Clean Architecture
+## Integration with Clean Architecture
 
 ```
 Domain Layer:
@@ -228,26 +233,26 @@ Infrastructure Layer:
 
 ---
 
-## Anti-patterns DDD
+## DDD anti-patterns
 
-| Anti-pattern | Síntoma | Fix |
+| Anti-pattern | Symptom | Fix |
 |-------------|---------|-----|
-| **Anemic Domain Model** | Entidades con solo getters/setters, lógica en servicios | Mover lógica al aggregate |
-| **Fat Service** | Un servicio con toda la lógica del negocio | Distribuir en aggregates y domain services |
-| **Shared Database** | Dos bounded contexts leen la misma tabla | Separar schemas o eventualmente bases |
-| **God Aggregate** | Un aggregate con 20 entidades adentro | Dividir — probablemente son 3 aggregates |
-| **Primitive Obsession** | `String orderId`, `int price` en vez de Value Objects | Crear tipos semánticos |
+| **Anemic Domain Model** | Entities with only getters/setters, logic in services | Move the logic into the aggregate |
+| **Fat Service** | One service holding all the business logic | Distribute it across aggregates and domain services |
+| **Shared Database** | Two bounded contexts read the same table | Separate schemas or eventually databases |
+| **God Aggregate** | One aggregate with 20 entities inside | Split it — it's probably 3 aggregates |
+| **Primitive Obsession** | `String orderId`, `int price` instead of Value Objects | Create semantic types |
 
 ---
 
-## Checklist DDD
+## DDD checklist
 
-- [ ] ¿El código usa los mismos términos que el negocio?
-- [ ] ¿Hay un glosario de dominio documentado?
-- [ ] ¿La lógica de negocio vive en el aggregate, no en el controller o service?
-- [ ] ¿Los Value Objects son inmutables y se validan en construcción?
-- [ ] ¿Los aggregates se modifican solo a través de la raíz?
-- [ ] ¿Los repositorios son interfaces en el dominio, implementaciones en infra?
-- [ ] ¿Los Domain Events están en tiempo pasado y son inmutables?
-- [ ] ¿Los bounded contexts están identificados y sus límites son claros?
-- [ ] ¿Las integraciones externas pasan por Anti-Corruption Layer?
+- [ ] Does the code use the same terms as the business?
+- [ ] Is there a documented domain glossary?
+- [ ] Does the business logic live in the aggregate, not in the controller or service?
+- [ ] Are Value Objects immutable and validated on construction?
+- [ ] Are aggregates modified only through the root?
+- [ ] Are repositories interfaces in the domain and implementations in infra?
+- [ ] Are Domain Events in the past tense and immutable?
+- [ ] Are the bounded contexts identified and their boundaries clear?
+- [ ] Do external integrations go through an Anti-Corruption Layer?

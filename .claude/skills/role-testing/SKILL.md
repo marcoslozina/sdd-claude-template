@@ -1,32 +1,37 @@
+---
+name: role-testing
+description: Testing strategy focused on behavior over implementation - test pyramid, unit tests for use cases and domain, integration tests with Testcontainers, E2E/API tests, naming conventions, test doubles (fake/stub/mock/spy), and coverage perspective. Use when writing or reviewing tests, choosing fakes vs mocks, setting up test infrastructure, or debating coverage thresholds.
+---
+
 # Skill: Testing Strategy
 
-## Principio base
-Los tests verifican COMPORTAMIENTO, no implementación.
-Un test que pasa cuando el código está roto no es un test — es ruido.
+## Base principle
+Tests verify BEHAVIOR, not implementation.
+A test that passes when the code is broken is not a test — it's noise.
 
 ---
 
-## Pirámide de tests
+## Test pyramid
 
 ```
            /\
           /  \
-         / E2E \          ← pocos, lentos, costosos (flujos críticos)
+         / E2E \          ← few, slow, expensive (critical flows)
         /--------\
-       /Integration\      ← adapters contra infra real
+       /Integration\      ← adapters against real infra
       /--------------\
-     /   Unit Tests   \   ← mayoría, rápidos, aislados
+     /   Unit Tests   \   ← the majority, fast, isolated
     /------------------\
 ```
 
-**Regla:** si tenés muchos E2E y pocos unitarios, la pirámide está invertida. Es frágil y lenta.
+**Rule:** if you have many E2E tests and few unit tests, the pyramid is inverted. That's fragile and slow.
 
 ---
 
-## Unit Tests — use cases y dominio
+## Unit Tests — use cases and domain
 
 ```python
-# ✅ Testear comportamiento, no implementación
+# ✅ Test behavior, not implementation
 def test_create_user_assigns_unique_id():
     repo = FakeUserRepository()
     use_case = CreateUserUseCase(repo)
@@ -43,7 +48,7 @@ def test_create_user_raises_when_email_already_exists():
     with pytest.raises(DuplicateEmailError):
         use_case.execute(name="Ana2", email="ana@test.com")
 
-# ✅ Fake en lugar de mock cuando el contrato es simple
+# ✅ Fake instead of mock when the contract is simple
 class FakeUserRepository(UserRepository):
     def __init__(self, existing_emails: set[str] = None):
         self._users: dict[UserId, User] = {}
@@ -59,15 +64,15 @@ class FakeUserRepository(UserRepository):
 ```
 
 **Fakes vs Mocks:**
-- **Fake:** implementación simplificada del contrato (preferido)
-- **Mock:** verificación de llamadas (solo cuando el comportamiento observable ES la llamada)
+- **Fake:** a simplified implementation of the contract (preferred)
+- **Mock:** verification of calls (only when the observable behavior IS the call)
 
 ---
 
 ## Integration Tests — adapters
 
 ```python
-# Testear el adapter contra infraestructura real
+# Test the adapter against real infrastructure
 import pytest
 from testcontainers.postgres import PostgresContainer
 
@@ -90,14 +95,14 @@ def test_save_and_find_user(repo):
     assert found.email == "ana@test.com"
 ```
 
-**Nunca H2/SQLite en lugar de Postgres en producción.** El comportamiento difiere. Usá Testcontainers.
+**Never H2/SQLite in place of Postgres in production.** The behavior differs. Use Testcontainers.
 
 ---
 
 ## E2E / API Tests
 
 ```python
-# Testear el contrato de la API completa
+# Test the full API contract
 import httpx
 from fastapi.testclient import TestClient
 
@@ -117,55 +122,55 @@ def test_get_nonexistent_user_returns_404(client: TestClient):
 
 ---
 
-## Naming — convenciones
+## Naming — conventions
 
 ```
-test_<qué>_when_<condición>_then_<resultado>
+test_<what>_when_<condition>_then_<result>
 
 test_create_user_when_email_exists_then_raises_duplicate_error
 test_find_user_when_id_not_found_then_returns_none
 test_post_user_when_input_invalid_then_returns_422
 ```
 
-Cada nombre debe poder leerse como documentación. Si no queda claro, el test hace demasiado.
+Every name should read as documentation. If it isn't clear, the test does too much.
 
 ---
 
-## Qué NO testear
+## What NOT to test
 
-- Getters/setters triviales sin lógica
-- El framework (FastAPI ya testea que el routing funciona)
-- Infraestructura de terceros (no testees que Postgres funciona)
-- Implementación interna (refactor no debería romper tests)
-
----
-
-## Cobertura — perspectiva correcta
-
-**Cobertura alta no es igual a tests buenos.**
-
-- 100% cobertura con tests triviales = falsa seguridad
-- 70% cobertura con tests de comportamiento real = mucho más valor
-
-**Lo que SÍ medir:** cuántos bugs escapan a producción.
+- Trivial getters/setters with no logic
+- The framework (FastAPI already tests that routing works)
+- Third-party infrastructure (don't test that Postgres works)
+- Internal implementation (a refactor should not break tests)
 
 ---
 
-## Test doubles — cuándo usar qué
+## Coverage — the right perspective
 
-| Tipo | Qué hace | Cuándo |
+**High coverage does not equal good tests.**
+
+- 100% coverage with trivial tests = false confidence
+- 70% coverage with real behavior tests = far more value
+
+**What you SHOULD measure:** how many bugs escape to production.
+
+---
+
+## Test doubles — when to use what
+
+| Type | What it does | When |
 |------|----------|--------|
-| **Fake** | Implementación simplificada | Port con contrato simple |
-| **Stub** | Devuelve valor fijo | Dependencia con un solo path relevante |
-| **Mock** | Verifica que fue llamado | Cuando el efecto ES la llamada (emails, eventos) |
-| **Spy** | Registra llamadas sin cambiar comportamiento | Debugging de tests complejos |
+| **Fake** | Simplified implementation | Port with a simple contract |
+| **Stub** | Returns a fixed value | Dependency with a single relevant path |
+| **Mock** | Verifies it was called | When the effect IS the call (emails, events) |
+| **Spy** | Records calls without changing behavior | Debugging complex tests |
 
 ---
 
-## Decisiones comunes en Testing
+## Common decisions in Testing
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
-- **Fakes vs Mocks:** para cada port del dominio
-- **Testcontainers vs embedded DB:** para adapters de base de datos
-- **Coverage threshold:** qué % mínimo imponer en CI
-- **Test isolation:** base de datos limpia entre tests vs transacciones que se revierten
+Apply the decision protocol from CLAUDE.md when facing:
+- **Fakes vs Mocks:** for each domain port
+- **Testcontainers vs embedded DB:** for database adapters
+- **Coverage threshold:** what minimum % to enforce in CI
+- **Test isolation:** a clean database between tests vs transactions that roll back

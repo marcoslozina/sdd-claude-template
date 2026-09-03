@@ -1,48 +1,53 @@
+---
+name: role-app-performance
+description: Finding and fixing real application bottlenecks — profiling (Python, Go, Java, Node), Big O red flags, N+1 queries, SQL indexing, caching strategies, connection pooling, memory management and HTTP/pagination tuning. Use when an app is slow, when designing for latency or throughput targets, or when reviewing code that touches the DB, the network, or hot loops.
+---
+
 # Skill: Application Performance
 
-## Rol
-Identificar y eliminar cuellos de botella reales, no percibidos. Sin profiling no hay optimización —
-la intuición sobre performance falla el 90% del tiempo. Medir primero, optimizar después.
+## Role
+Identify and eliminate real bottlenecks, not perceived ones. Without profiling there is no optimization —
+performance intuition is wrong 90% of the time. Measure first, optimize afterwards.
 
-## Cuándo activar este skill
-- La aplicación es lenta y no se sabe por qué
-- Se va a diseñar un sistema con requerimientos de latencia o throughput
-- Code review de código que toca DB, red o procesamiento intensivo
-- Se detectan queries N+1, caché ausente o estructuras de datos incorrectas
-
----
-
-## Regla de oro
-
-```
-NUNCA optimizar sin medir primero.
-Profile → identifica el cuello de botella real → optimiza → mide de nuevo.
-```
-
-La optimización prematura es la raíz de todos los males (Knuth). El código lento y correcto
-es mejor que el código rápido e incorrecto.
+## When to activate this skill
+- The application is slow and nobody knows why
+- You're about to design a system with latency or throughput requirements
+- Code review of code that touches the DB, the network, or intensive processing
+- N+1 queries, missing caching, or wrong data structures are spotted
 
 ---
 
-## Complejidad algorítmica — Big O
+## Golden rule
 
-| Complejidad | Nombre | Escala con N=1M |
+```
+NEVER optimize without measuring first.
+Profile → identify the real bottleneck → optimize → measure again.
+```
+
+Premature optimization is the root of all evil (Knuth). Slow and correct code
+beats fast and incorrect code.
+
+---
+
+## Algorithmic complexity — Big O
+
+| Complexity | Name | Scale at N=1M |
 |-------------|--------|-----------------|
-| O(1) | Constante | 1 op |
-| O(log n) | Logarítmica | ~20 ops |
-| O(n) | Lineal | 1.000.000 ops |
-| O(n log n) | Linealítmica | ~20.000.000 ops |
-| O(n²) | Cuadrática | 1.000.000.000.000 ops — PELIGRO |
-| O(2ⁿ) | Exponencial | No escala |
+| O(1) | Constant | 1 op |
+| O(log n) | Logarithmic | ~20 ops |
+| O(n) | Linear | 1,000,000 ops |
+| O(n log n) | Linearithmic | ~20,000,000 ops |
+| O(n²) | Quadratic | 1,000,000,000,000 ops — DANGER |
+| O(2ⁿ) | Exponential | Does not scale |
 
-**Señales de alerta en código:**
+**Warning signs in code:**
 ```python
-# ❌ O(n²) — loop dentro de loop sobre colecciones
+# ❌ O(n²) — loop inside a loop over collections
 for user in users:
-    for order in orders:  # si orders crece, esto explota
+    for order in orders:  # if orders grows, this blows up
         if order.user_id == user.id: ...
 
-# ✅ O(n) — lookup en O(1) con dict/map
+# ✅ O(n) — O(1) lookup with a dict/map
 orders_by_user = {o.user_id: o for o in orders}
 for user in users:
     order = orders_by_user.get(user.id)
@@ -50,7 +55,7 @@ for user in users:
 
 ---
 
-## Perfilado por lenguaje
+## Profiling per language
 
 ### Python
 ```bash
@@ -60,7 +65,7 @@ python -m cProfile -o output.prof app.py && snakeviz output.prof
 
 # Memory profiling
 pip install memory-profiler
-@profile  # decorador en la función a medir
+@profile  # decorator on the function to measure
 python -m memory_profiler app.py
 
 # Line-by-line
@@ -73,23 +78,23 @@ kernprof -l -v app.py
 ### Go
 ```go
 import _ "net/http/pprof"
-// Exponer en :6060/debug/pprof
+// Expose on :6060/debug/pprof
 go tool pprof http://localhost:6060/debug/pprof/profile
 go tool pprof http://localhost:6060/debug/pprof/heap
 ```
 
 ### Java
 ```bash
-# JVM flags para profiling
+# JVM flags for profiling
 -XX:+FlightRecorder -XX:StartFlightRecording=duration=60s,filename=app.jfr
-# Visualizar con JDK Mission Control
+# Visualize with JDK Mission Control
 ```
 
 ### TypeScript/Node
 ```bash
 node --prof app.js
 node --prof-process isolate-*.log > processed.txt
-# O usar clinic.js
+# Or use clinic.js
 npx clinic doctor -- node app.js
 ```
 
@@ -97,61 +102,61 @@ npx clinic doctor -- node app.js
 
 ## Database performance
 
-### N+1 — el problema más común
+### N+1 — the most common problem
 
 ```python
-# ❌ N+1: 1 query para users + N queries para orders
+# ❌ N+1: 1 query for users + N queries for orders
 users = db.query(User).all()
 for user in users:
-    print(user.orders)  # query por cada usuario
+    print(user.orders)  # one query per user
 
 # ✅ Eager loading: 2 queries total
 users = db.query(User).options(joinedload(User.orders)).all()
 ```
 
-### Indexing — reglas base
+### Indexing — base rules
 
 ```sql
--- Indexar columnas usadas en WHERE, JOIN, ORDER BY
+-- Index columns used in WHERE, JOIN, ORDER BY
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
 
--- Índice compuesto: columna más selectiva primero
+-- Composite index: most selective column first
 CREATE INDEX idx_orders_status_user ON orders(status, user_id);
 
--- EXPLAIN para verificar que el índice se usa
+-- EXPLAIN to verify the index is actually used
 EXPLAIN ANALYZE SELECT * FROM orders WHERE user_id = 123;
 ```
 
 ### Query optimization
 
 ```sql
--- ❌ SELECT * trae columnas innecesarias
+-- ❌ SELECT * brings back unnecessary columns
 SELECT * FROM users WHERE active = true;
 
--- ✅ Solo las columnas necesarias
+-- ✅ Only the columns you need
 SELECT id, email, name FROM users WHERE active = true;
 
--- ❌ LIKE con wildcard al inicio no usa índice
+-- ❌ LIKE with a leading wildcard cannot use an index
 SELECT * FROM users WHERE email LIKE '%@gmail.com';
 
--- ✅ Wildcard solo al final usa índice
+-- ✅ Wildcard only at the end uses the index
 SELECT * FROM users WHERE email LIKE 'marco%';
 ```
 
 ---
 
-## Caching — estrategias
+## Caching — strategies
 
-| Estrategia | Cuándo | TTL recomendado |
+| Strategy | When | Recommended TTL |
 |-----------|--------|-----------------|
-| **Cache-aside** | Reads frecuentes, datos cambian poco | Minutos-horas |
-| **Write-through** | Consistencia crítica | Sin TTL, invalidar on write |
-| **Write-behind** | Writes frecuentes, consistencia eventual ok | Segundos |
-| **Read-through** | Transparente para el cliente | Minutos |
+| **Cache-aside** | Frequent reads, data changes rarely | Minutes-hours |
+| **Write-through** | Consistency is critical | No TTL, invalidate on write |
+| **Write-behind** | Frequent writes, eventual consistency is fine | Seconds |
+| **Read-through** | Transparent to the client | Minutes |
 
 ```python
-# Cache-aside con Redis
+# Cache-aside with Redis
 def get_user(user_id: str) -> User:
     cached = redis.get(f"user:{user_id}")
     if cached:
@@ -161,10 +166,10 @@ def get_user(user_id: str) -> User:
     redis.setex(f"user:{user_id}", ttl=300, value=user.to_json())
     return user
 
-# Invalidar en writes
+# Invalidate on writes
 def update_user(user_id: str, data: dict) -> User:
     user = db.update(user_id, data)
-    redis.delete(f"user:{user_id}")  # invalidar caché
+    redis.delete(f"user:{user_id}")  # invalidate cache
     return user
 ```
 
@@ -173,19 +178,19 @@ def update_user(user_id: str, data: dict) -> User:
 ## Connection pooling
 
 ```python
-# ❌ Nueva conexión por request — caro
+# ❌ A new connection per request — expensive
 def get_user(id):
-    conn = psycopg2.connect(DATABASE_URL)  # costoso
+    conn = psycopg2.connect(DATABASE_URL)  # costly
     ...
     conn.close()
 
-# ✅ Pool de conexiones reutilizables
+# ✅ Pool of reusable connections
 from sqlalchemy import create_engine
 engine = create_engine(DATABASE_URL, pool_size=10, max_overflow=20)
 ```
 
 ```go
-// Go: configurar pool en sql.DB
+// Go: configure the pool on sql.DB
 db, _ := sql.Open("postgres", dsn)
 db.SetMaxOpenConns(25)
 db.SetMaxIdleConns(10)
@@ -198,19 +203,19 @@ db.SetConnMaxLifetime(5 * time.Minute)
 
 ### Python
 ```python
-# Generators en vez de listas para grandes volúmenes
-# ❌ Carga todo en memoria
+# Generators instead of lists for large volumes
+# ❌ Loads everything into memory
 def get_all_users():
-    return db.query(User).all()  # 1M users en RAM
+    return db.query(User).all()  # 1M users in RAM
 
-# ✅ Streaming con generator
+# ✅ Streaming with a generator
 def get_all_users():
     yield from db.query(User).yield_per(1000)
 ```
 
 ### Go
 ```go
-// Reusar buffers con sync.Pool
+// Reuse buffers with sync.Pool
 var bufPool = sync.Pool{
     New: func() interface{} { return new(bytes.Buffer) },
 }
@@ -229,15 +234,15 @@ func process() {
 ## HTTP performance
 
 ```typescript
-// Compresión — reducir tamaño de respuesta
+// Compression — reduce response size
 app.use(compression())
 
 // HTTP caching headers
 res.set('Cache-Control', 'public, max-age=3600')
 res.set('ETag', hash(data))
 
-// Paginación con cursor (más eficiente que offset en tablas grandes)
-// ❌ OFFSET escala mal
+// Cursor pagination (more efficient than offset on large tables)
+// ❌ OFFSET scales badly
 SELECT * FROM orders ORDER BY id LIMIT 20 OFFSET 10000;
 
 // ✅ Cursor-based pagination
@@ -246,14 +251,14 @@ SELECT * FROM orders WHERE id > :last_id ORDER BY id LIMIT 20;
 
 ---
 
-## Checklist de performance review
+## Performance review checklist
 
-- [ ] ¿Hay loops anidados sobre colecciones grandes? (señal de O(n²))
-- [ ] ¿Las queries tienen índices en las columnas del WHERE y JOIN?
-- [ ] ¿Se está usando SELECT * donde no corresponde?
-- [ ] ¿Hay N+1 queries en operaciones sobre listas?
-- [ ] ¿Los datos frecuentemente leídos tienen caché?
-- [ ] ¿Se invalida el caché correctamente en writes?
-- [ ] ¿Hay connection pooling configurado?
-- [ ] ¿Las operaciones I/O-bound son asíncronas?
-- [ ] ¿Se perfiló antes de optimizar?
+- [ ] Are there nested loops over large collections? (sign of O(n²))
+- [ ] Do the queries have indexes on the WHERE and JOIN columns?
+- [ ] Is SELECT * being used where it shouldn't?
+- [ ] Are there N+1 queries in operations over lists?
+- [ ] Is frequently read data cached?
+- [ ] Is the cache invalidated correctly on writes?
+- [ ] Is connection pooling configured?
+- [ ] Are I/O-bound operations asynchronous?
+- [ ] Did you profile before optimizing?

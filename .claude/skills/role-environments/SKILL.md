@@ -1,38 +1,43 @@
-# Skill: Multi-Ambiente y Feature Flags
+---
+name: role-environments
+description: Multi-environment strategy and feature flags: typed per-environment config, .env layout, secrets managers, gradual rollout, kill switches, and zero-downtime expand/contract migrations. Use when setting up local/dev/staging/prod, wiring env vars or feature flags, or planning a backward-compatible schema migration.
+---
 
-## Principio base
-El código es el mismo en todos los ambientes. Lo que cambia es la configuración.
-Nunca `if ENV == "production"` en lógica de negocio.
+# Skill: Multi-Environment and Feature Flags
+
+## Core principle
+The code is the same in every environment. What changes is the configuration.
+Never `if ENV == "production"` inside business logic.
 
 ---
 
-## Estrategia de ambientes
+## Environment strategy
 
 ```
 local → dev → staging → production
   │       │       │          │
-  │       │       │          └── tráfico real, datos reales
-  │       │       └── mirror de prod, datos anonimizados
-  │       └── integración continua, datos de test
-  └── máquina del desarrollador
+  │       │       │          └── real traffic, real data
+  │       │       └── mirror of prod, anonymized data
+  │       └── continuous integration, test data
+  └── developer machine
 ```
 
-### Reglas por ambiente
+### Rules per environment
 
-| Regla | Local | Dev | Staging | Prod |
+| Rule | Local | Dev | Staging | Prod |
 |-------|-------|-----|---------|------|
-| Datos reales de usuarios | ❌ | ❌ | ❌ | ✅ |
-| Datos anonimizados | ✅ | ✅ | ✅ | ❌ |
-| Migrations automáticas | ✅ | ✅ | ❌ | ❌ |
+| Real user data | ❌ | ❌ | ❌ | ✅ |
+| Anonymized data | ✅ | ✅ | ✅ | ❌ |
+| Automatic migrations | ✅ | ✅ | ❌ | ❌ |
 | Debug logs | ✅ | ✅ | ❌ | ❌ |
-| Feature flags activos | Todos | Todos | Seleccionados | Graduales |
-| Deploy manual | ✅ | ❌ | ❌ | ❌ |
+| Active feature flags | All | All | Selected | Gradual |
+| Manual deploy | ✅ | ❌ | ❌ | ❌ |
 
 ---
 
-## Gestión de configuración
+## Configuration management
 
-### Patrón: config tipada por ambiente
+### Pattern: typed config per environment
 
 ```python
 # config/settings.py
@@ -53,7 +58,7 @@ class Settings(BaseSettings):
     api_key: str
     log_level: str = "info"
 
-    # Valores que cambian por ambiente
+    # Values that change per environment
     @property
     def is_production(self) -> bool:
         return self.env == Environment.PRODUCTION
@@ -69,18 +74,18 @@ class Settings(BaseSettings):
 settings = Settings()
 ```
 
-### Archivos de configuración por ambiente
+### Configuration files per environment
 
 ```
-.env.example          # template sin valores reales → commiteado
-.env.local            # valores locales → en .gitignore
-.env.dev              # valores dev → en .gitignore o secrets manager
-.env.staging          # valores staging → secrets manager
-.env.production       # NUNCA en filesystem → solo secrets manager
+.env.example          # template with no real values → committed
+.env.local            # local values → in .gitignore
+.env.dev              # dev values → in .gitignore or secrets manager
+.env.staging          # staging values → secrets manager
+.env.production       # NEVER on the filesystem → secrets manager only
 ```
 
 ```bash
-# .env.example — commiteado, sin valores reales
+# .env.example — committed, no real values
 DATABASE_URL=postgresql://user:password@localhost:5432/myapp
 REDIS_URL=redis://localhost:6379
 API_KEY=your-api-key-here
@@ -91,18 +96,18 @@ LOG_LEVEL=info
 
 ## Feature Flags
 
-### Cuándo usar feature flags
+### When to use feature flags
 
-| Caso | Usar |
+| Case | Use |
 |------|------|
-| Deploy sin activar feature | ✅ |
+| Deploy without enabling the feature | ✅ |
 | A/B testing | ✅ |
-| Rollout gradual (1% → 10% → 100%) | ✅ |
-| Kill switch de emergencia | ✅ |
-| Config que cambia por usuario/segmento | ✅ |
-| Lógica permanente de negocio | ❌ usar config normal |
+| Gradual rollout (1% → 10% → 100%) | ✅ |
+| Emergency kill switch | ✅ |
+| Config that varies per user/segment | ✅ |
+| Permanent business logic | ❌ use regular config |
 
-### Implementación simple (sin librería)
+### Simple implementation (no library)
 
 ```python
 # domain/ports/feature_flags.py
@@ -117,7 +122,7 @@ class EnvFeatureFlags(FeatureFlags):
     def is_enabled(self, flag: str, user_id: str | None = None) -> bool:
         return os.environ.get(f"FEATURE_{flag.upper()}", "false").lower() == "true"
 
-# uso en use case
+# usage in a use case
 class CheckoutUseCase:
     def __init__(self, flags: FeatureFlags):
         self._flags = flags
@@ -128,7 +133,7 @@ class CheckoutUseCase:
         return self._legacy_payment_flow(cart)
 ```
 
-### Con LaunchDarkly / GrowthBook (producción)
+### With LaunchDarkly / GrowthBook (production)
 
 ```python
 import ldclient
@@ -144,65 +149,65 @@ def is_feature_enabled(flag: str, user_id: str) -> bool:
 
 ---
 
-## Rollout gradual
+## Gradual rollout
 
 ```
-Fase 1: 0% usuarios    → feature off, solo en dev/staging
-Fase 2: 1% usuarios    → smoke test en prod con tráfico real mínimo
-Fase 3: 10% usuarios   → monitorear métricas, errores, latencia
-Fase 4: 50% usuarios   → A/B testing, comparar métricas
-Fase 5: 100% usuarios  → feature completamente activa
-Fase 6: eliminar flag  → cleanup del código (deuda técnica)
+Phase 1: 0% of users    → feature off, dev/staging only
+Phase 2: 1% of users    → smoke test in prod with minimal real traffic
+Phase 3: 10% of users   → monitor metrics, errors, latency
+Phase 4: 50% of users   → A/B testing, compare metrics
+Phase 5: 100% of users  → feature fully enabled
+Phase 6: remove the flag → code cleanup (technical debt)
 ```
 
-**Nunca dejar flags viejos en el código.** Cada flag tiene fecha de expiración.
+**Never leave old flags in the code.** Every flag has an expiration date.
 
 ---
 
-## Migrations — estrategia por ambiente
+## Migrations — strategy per environment
 
-### Zero-downtime migrations (producción)
+### Zero-downtime migrations (production)
 
 ```
-❌ Renombrar columna en un paso:
+❌ Renaming a column in one step:
    ALTER TABLE users RENAME COLUMN user_name TO name;
-   → rompe el código en producción que usa user_name
+   → breaks the production code that uses user_name
 
-✅ En tres deploys:
-   Deploy 1: agregar columna nueva `name`, escribir en ambas
-   Deploy 2: leer desde `name`, seguir escribiendo en ambas
-   Deploy 3: eliminar columna `user_name`
+✅ In three deploys:
+   Deploy 1: add the new `name` column, write to both
+   Deploy 2: read from `name`, keep writing to both
+   Deploy 3: drop the `user_name` column
 ```
 
 ```python
 # Expand-Contract pattern
-# Paso 1: Expand — agregar, no cambiar
+# Step 1: Expand — add, don't change
 def upgrade():
     op.add_column('users', sa.Column('name', sa.String))
     op.execute("UPDATE users SET name = user_name")
 
-# Paso 2 (deploy siguiente): Contract — eliminar lo viejo
+# Step 2 (next deploy): Contract — remove the old one
 def upgrade():
     op.drop_column('users', 'user_name')
 ```
 
 ---
 
-## Checklist antes de deploy a producción
+## Checklist before deploying to production
 
-- [ ] Feature testeada en staging con datos anonimizados
-- [ ] Feature flag configurado para rollout gradual
-- [ ] Migrations backward-compatible (no rompen la versión anterior)
-- [ ] Rollback plan definido (¿cómo revertimos si algo falla?)
-- [ ] Alertas configuradas para las métricas relevantes de la feature
-- [ ] Runbook actualizado si la operación es compleja
+- [ ] Feature tested in staging with anonymized data
+- [ ] Feature flag configured for gradual rollout
+- [ ] Backward-compatible migrations (they don't break the previous version)
+- [ ] Rollback plan defined (how do we revert if something fails?)
+- [ ] Alerts configured for the feature's relevant metrics
+- [ ] Runbook updated if the operation is complex
 
 ---
 
-## Decisiones comunes en Multi-Ambiente
+## Common Multi-Environment decisions
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+Apply the decision protocol from CLAUDE.md when facing:
 - **Feature flags:** homebrew vs LaunchDarkly vs GrowthBook vs Unleash
 - **Config management:** env vars vs AWS Parameter Store vs Vault
-- **Staging data:** anonimización vs datos sintéticos vs subset de prod
-- **Deploy strategy:** blue/green vs canary vs rolling (ver `role-cicd`)
+- **Staging data:** anonymization vs synthetic data vs a subset of prod
+- **Deploy strategy:** blue/green vs canary vs rolling (see `role-cicd`)

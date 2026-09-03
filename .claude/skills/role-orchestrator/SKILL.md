@@ -1,226 +1,231 @@
+---
+name: role-orchestrator
+description: Agent-team orchestration: delegate-first rules, sync task vs async delegate, sub-agent prompt structure, Engram context injection and topic keys, SDD phase parallelization, and task dependency analysis. Use when coordinating sub-agents, running SDD phases, or deciding what to parallelize and what to keep sequential.
+---
+
 # Skill: Orchestrator — Agent Team Architecture
 
-## Rol
-El orquestador NO ejecuta trabajo. Coordina, delega y sintetiza.
-Todo trabajo real (leer código, escribir código, análisis) va a sub-agentes.
+## Role
+The orchestrator does NOT do the work. It coordinates, delegates, and synthesizes.
+All real work (reading code, writing code, analysis) goes to sub-agents.
 
 ---
 
-## Principio fundamental
+## Fundamental principle
 
 ```
-Orquestador = contexto mínimo + coordinación
-Sub-agentes  = contexto aislado + trabajo real
+Orchestrator = minimal context + coordination
+Sub-agents   = isolated context + real work
 
-Beneficios:
-  ⏱  Tiempo:   fases paralelas reducen wall clock hasta 50%
-  🪙  Tokens:   cada sub-agente procesa solo lo que necesita
-  🧠  Memoria:  Engram persiste entre agentes y sesiones
-  🔒  Aislado:  un agente que falla no contamina el contexto principal
+Benefits:
+  ⏱  Time:     parallel phases cut wall clock by up to 50%
+  🪙  Tokens:   each sub-agent processes only what it needs
+  🧠  Memory:   Engram persists across agents and sessions
+  🔒  Isolated: a failing agent doesn't pollute the main context
 ```
 
 ---
 
-## Reglas del orquestador
+## Orchestrator rules
 
-| Regla | Descripción |
+| Rule | Description |
 |-------|-------------|
-| No inline work | Leer/escribir código → siempre sub-agente |
-| Delegate-first | Preferir `delegate` (async) sobre `task` (sync) |
-| Parallel by default | Si dos fases no se bloquean → lanzarlas juntas |
-| Context injection | El orquestador busca en Engram y pasa contexto al sub-agente |
-| Write to Engram | Los sub-agentes guardan descubrimientos antes de terminar |
+| No inline work | Reading/writing code → always a sub-agent |
+| Delegate-first | Prefer `delegate` (async) over `task` (sync) |
+| Parallel by default | If two phases don't block each other → launch them together |
+| Context injection | The orchestrator searches Engram and passes context to the sub-agent |
+| Write to Engram | Sub-agents save discoveries before finishing |
 
-**Anti-patterns — nunca hacer:**
-- Leer archivos de código "para entender" → delegá
-- Escribir código directamente → delegá
-- Hacer análisis inline "rápido" → delegá
-- Pasar el contenido completo de artefactos entre agentes → pasá el ID de Engram
+**Anti-patterns — never do these:**
+- Reading code files "to understand" → delegate
+- Writing code directly → delegate
+- Doing a "quick" inline analysis → delegate
+- Passing full artifact content between agents → pass the Engram ID
 
 ---
 
-## Flujo de delegación
+## Delegation flow
 
 ### Delegate (async — default)
 ```
-Orquestador: "Voy a lanzar spec y design en paralelo"
-    → delegate: sdd-spec  (corre en background)
-    → delegate: sdd-design (corre en background)
-    → [esperá ambos]
-    → sintetizá resultados
-    → mostrá al usuario
+Orchestrator: "I'm going to launch spec and design in parallel"
+    → delegate: sdd-spec  (runs in the background)
+    → delegate: sdd-design (runs in the background)
+    → [wait for both]
+    → synthesize results
+    → show to the user
 ```
 
-### Task (sync — solo si necesitás el resultado antes de continuar)
+### Task (sync — only if you need the result before continuing)
 ```
-Orquestador: "Necesito la exploración antes de proponer"
+Orchestrator: "I need the exploration before proposing"
     → task: sdd-explore
-    → [esperá resultado]
-    → usá resultado para construir la propuesta
+    → [wait for the result]
+    → use the result to build the proposal
 ```
 
 ---
 
-## Protocolo de contexto para sub-agentes
+## Context protocol for sub-agents
 
-### Lo que el orquestador hace ANTES de lanzar un sub-agente
+### What the orchestrator does BEFORE launching a sub-agent
 
 ```
-1. Buscar contexto relevante en Engram:
-   mem_search(query: "topic keywords", project: "nombre-proyecto")
+1. Search for relevant context in Engram:
+   mem_search(query: "topic keywords", project: "project-name")
 
-2. Si hay resultado → mem_get_observation(id) para contenido completo
+2. If there's a result → mem_get_observation(id) for the full content
 
-3. Incluir en el prompt del sub-agente:
-   - Ruta exacta del skill a cargar
-   - Artefactos previos relevantes (topic keys de Engram, no el contenido)
-   - Instrucción explícita de guardar descubrimientos en Engram
+3. Include in the sub-agent prompt:
+   - The exact path of the skill to load
+   - Relevant prior artifacts (Engram topic keys, not the content)
+   - An explicit instruction to save discoveries to Engram
 ```
 
-### Estructura del prompt de sub-agente
+### Sub-agent prompt structure
 
 ```markdown
-SKILL: Lee `.claude/skills/{nombre}/SKILL.md` antes de empezar.
+SKILL: Read `.claude/skills/{name}/SKILL.md` before starting.
 
-CONTEXTO (de sesiones anteriores):
-  - Propuesta aprobada: topic key `sdd/{cambio}/proposal` en Engram
-  - Stack elegido: Python + FastAPI + PostgreSQL
+CONTEXT (from previous sessions):
+  - Approved proposal: topic key `sdd/{change}/proposal` in Engram
+  - Chosen stack: Python + FastAPI + PostgreSQL
 
-TAREA:
-  [descripción específica de lo que tiene que hacer]
+TASK:
+  [specific description of what it has to do]
 
-OUTPUT ESPERADO:
-  [qué formato, qué artefacto producir]
+EXPECTED OUTPUT:
+  [what format, what artifact to produce]
 
-MEMORIA:
-  Si hacés descubrimientos importantes, decisiones o encontrás bugs,
-  guardalos en Engram con mem_save antes de terminar.
-  project: "{nombre-proyecto}"
+MEMORY:
+  If you make important discoveries or decisions, or find bugs,
+  save them to Engram with mem_save before finishing.
+  project: "{project-name}"
 ```
 
 ---
 
-## Fases SDD — qué corre en paralelo
+## SDD phases — what runs in parallel
 
 ```
-sdd-explore         → sync (necesitás resultado antes de proponer)
+sdd-explore         → sync (you need the result before proposing)
        ↓
-sdd-propose         → sync (necesitás propuesta para spec y design)
+sdd-propose         → sync (you need the proposal for spec and design)
        ↓
 sdd-spec  ──────────┐
-                    ├── PARALELO (independientes entre sí)
+                    ├── PARALLEL (independent of each other)
 sdd-design ─────────┘
        ↓
-sdd-tasks           → sync (necesita spec + design)
+sdd-tasks           → sync (needs spec + design)
        ↓
 sdd-apply task-1 ───┐
 sdd-apply task-2 ───┤
-sdd-apply task-3 ───┼── PARALELO (si las tasks son independientes)
+sdd-apply task-3 ───┼── PARALLEL (if the tasks are independent)
 sdd-apply task-4 ───┘
        ↓
-sdd-verify          → sync (verifica todo junto)
+sdd-verify          → sync (verifies everything together)
 ```
 
-### Cuándo NO paralelizar apply
+### When NOT to parallelize apply
 
-Tasks que se bloquean entre sí NO van en paralelo:
+Tasks that block each other do NOT go in parallel:
 ```
-❌ Paralelo incorrecto:
-   task-1: crear tabla users
-   task-2: agregar foreign key que depende de users
-   → task-2 falla si task-1 no terminó
+❌ Wrong parallelization:
+   task-1: create the users table
+   task-2: add a foreign key that depends on users
+   → task-2 fails if task-1 hasn't finished
 
-✅ Secuencial:
+✅ Sequential:
    task-1 → task-2
 
-✅ Paralelo correcto:
-   task-A: implementar UserRepository
-   task-B: implementar ProductRepository
-   → independientes, van juntas
+✅ Correct parallelization:
+   task-A: implement UserRepository
+   task-B: implement ProductRepository
+   → independent, they go together
 ```
 
 ---
 
-## Engram — topic keys por proyecto
+## Engram — topic keys per project
 
 ```
-sdd-init/{proyecto}              → contexto inicial del proyecto
-sdd/{cambio}/explore             → artefacto de exploración
-sdd/{cambio}/proposal            → propuesta elegida
-sdd/{cambio}/spec                → especificación
-sdd/{cambio}/design              → diseño técnico
-sdd/{cambio}/tasks               → lista de tasks
-sdd/{cambio}/apply-progress      → progreso de implementación
-sdd/{cambio}/verify-report       → reporte de verificación
+sdd-init/{project}               → initial project context
+sdd/{change}/explore             → exploration artifact
+sdd/{change}/proposal            → chosen proposal
+sdd/{change}/spec                → specification
+sdd/{change}/design              → technical design
+sdd/{change}/tasks               → task list
+sdd/{change}/apply-progress      → implementation progress
+sdd/{change}/verify-report       → verification report
 ```
 
-Recuperar artefacto:
+Retrieving an artifact:
 ```
-1. mem_search(query: "sdd/{cambio}/spec")  → obtener ID
-2. mem_get_observation(id: {id})           → contenido completo
+1. mem_search(query: "sdd/{change}/spec")  → get the ID
+2. mem_get_observation(id: {id})           → full content
 ```
 
 ---
 
-## Estimación de ahorro con paralelización
+## Estimated savings from parallelization
 
-| Fase | Sin paralelismo | Con paralelismo |
+| Phase | Without parallelism | With parallelism |
 |------|----------------|----------------|
 | explore → propose | 2 min | 2 min (sync) |
-| spec + design | 4 min | 2 min (paralelo) |
+| spec + design | 4 min | 2 min (parallel) |
 | tasks | 1 min | 1 min (sync) |
-| apply (4 tasks) | 8 min | 2-3 min (paralelo) |
+| apply (4 tasks) | 8 min | 2-3 min (parallel) |
 | verify | 1 min | 1 min (sync) |
 | **Total** | **16 min** | **8-9 min** |
 
-El ahorro real depende de la complejidad. En proyectos grandes la diferencia es mayor.
+The real savings depend on complexity. On large projects the difference is bigger.
 
 ---
 
-## Ejemplo de orquestación completa
+## Full orchestration example
 
 ```
-Usuario: "Necesito implementar autenticación JWT"
+User: "I need to implement JWT authentication"
 
-Orquestador:
-  1. mem_search("jwt auth {proyecto}") → nada previo
+Orchestrator:
+  1. mem_search("jwt auth {project}") → nothing prior
 
-  2. [task] sdd-explore "autenticación JWT en este proyecto"
-     → resultado: contexto del sistema, stack, patrones existentes
+  2. [task] sdd-explore "JWT authentication in this project"
+     → result: system context, stack, existing patterns
 
-  3. Presenta propuesta (2-3 opciones) → usuario elige opción B
+  3. Presents a proposal (2-3 options) → user picks option B
 
-  4. [delegate] sdd-spec  "auth JWT según propuesta B"
-     [delegate] sdd-design "auth JWT según propuesta B"
-     → ambos en paralelo, ambos escriben en Engram
+  4. [delegate] sdd-spec  "JWT auth per proposal B"
+     [delegate] sdd-design "JWT auth per proposal B"
+     → both in parallel, both write to Engram
 
-  5. Espera ambos → presenta resumen → usuario confirma
+  5. Waits for both → presents a summary → user confirms
 
-  6. [task] sdd-tasks "auth JWT"
-     → lista de 5 tasks
+  6. [task] sdd-tasks "JWT auth"
+     → list of 5 tasks
 
-  7. Usuario confirma → analiza dependencias:
-     task-1 (User entity) → independiente
-     task-2 (JWT utils)   → independiente
-     task-3 (middleware)  → depende de task-1 y task-2
-     task-4 (routes)      → depende de task-3
-     task-5 (tests)       → depende de todas
+  7. User confirms → analyze dependencies:
+     task-1 (User entity) → independent
+     task-2 (JWT utils)   → independent
+     task-3 (middleware)  → depends on task-1 and task-2
+     task-4 (routes)      → depends on task-3
+     task-5 (tests)       → depends on all of them
 
   8. [delegate] sdd-apply task-1
      [delegate] sdd-apply task-2
-     → paralelo
+     → parallel
 
-  9. Espera → [task] sdd-apply task-3 → [task] sdd-apply task-4
+  9. Wait → [task] sdd-apply task-3 → [task] sdd-apply task-4
 
-  10. [task] sdd-verify → reporte final → presenta al usuario
+  10. [task] sdd-verify → final report → present to the user
 ```
 
 ---
 
-## Decisiones de arquitectura de agentes
+## Agent architecture decisions
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
-- **Sync vs async:** ¿necesito el resultado antes de continuar?
-- **Granularidad de tasks:** tasks muy chicas = overhead de agentes; muy grandes = no paralelizables
-- **Qué guardar en Engram:** decisiones, bugs, descubrimientos — no estado efímero
-- **Cuántos agentes en paralelo:** más de 4-5 simultáneos puede ser contraproducente
+Apply the decision protocol from CLAUDE.md when facing:
+- **Sync vs async:** do I need the result before continuing?
+- **Task granularity:** very small tasks = agent overhead; very large ones = not parallelizable
+- **What to save in Engram:** decisions, bugs, discoveries — not ephemeral state
+- **How many agents in parallel:** more than 4-5 at once can be counterproductive

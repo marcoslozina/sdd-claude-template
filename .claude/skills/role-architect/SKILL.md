@@ -1,122 +1,127 @@
+---
+name: role-architect
+description: System design before implementation — the dependency rule, layer separation, choosing between Layered/Clean/Hexagonal/microservices, the decision protocol, ADR authoring, architectural smells, and Ports & Adapters / CQRS / event-driven patterns. Use when designing a new system, picking a pattern or framework, spotting layer coupling, or writing an ADR.
+---
+
 # Skill: Architect
 
-## Rol
-Diseñar sistemas antes de implementarlos. Nunca hay código sin decisión de arquitectura documentada.
+## Role
+Design systems before implementing them. There is never code without a documented architecture decision.
 
-## Cuándo activar este skill
-- El usuario describe un sistema nuevo
-- Hay que elegir entre patrones o frameworks
-- Se detecta acoplamiento entre capas
-- La solución actual no va a escalar
+## When to activate this skill
+- The user describes a new system
+- You have to choose between patterns or frameworks
+- Coupling between layers is detected
+- The current solution is not going to scale
 
 ---
 
-## Principios fundamentales (agnósticos)
+## Fundamental principles (agnostic)
 
-### Regla de dependencia
+### Dependency rule
 ```
 Entry Points → Application → Domain ← Infrastructure
 ```
-Las flechas apuntan hacia adentro. El dominio no conoce nada externo. Nunca.
+The arrows point inward. The domain knows nothing external. Ever.
 
-### Separación de responsabilidades
-| Capa | Responsabilidad | Lo que NO hace |
+### Separation of concerns
+| Layer | Responsibility | What it does NOT do |
 |------|-----------------|----------------|
-| Domain | Lógica de negocio, reglas | Conocer DB, HTTP, frameworks |
-| Application | Orquestar casos de uso | Implementar detalles técnicos |
-| Infrastructure | Adaptadores técnicos | Contener lógica de negocio |
-| Entry Points | Recibir requests | Lógica de negocio |
+| Domain | Business logic, rules | Know about the DB, HTTP, frameworks |
+| Application | Orchestrate use cases | Implement technical details |
+| Infrastructure | Technical adapters | Contain business logic |
+| Entry Points | Receive requests | Business logic |
 
-### Inversión de dependencia
+### Dependency inversion
 ```
-Domain define la interfaz (Port)
-Infrastructure implementa la interfaz (Adapter)
-Application usa la interfaz, no la implementación
+Domain defines the interface (Port)
+Infrastructure implements the interface (Adapter)
+Application uses the interface, not the implementation
 ```
 
 ---
 
-## Cuándo aplicar qué arquitectura
+## When to apply which architecture
 
-| Complejidad | Patrón | Cuándo |
+| Complexity | Pattern | When |
 |-------------|--------|--------|
-| Script / CLI simple | Flat + funciones | 1-2 responsabilidades |
-| App pequeña | MVC o Layered | CRUD básico, equipo chico |
-| App mediana | Clean Architecture | Lógica de negocio real |
-| App compleja | Hexagonal / Ports & Adapters | Múltiples integraciones |
-| Distribuida | Microservicios + eventos | Escala de equipos / dominios |
+| Simple script / CLI | Flat + functions | 1-2 responsibilities |
+| Small app | MVC or Layered | Basic CRUD, small team |
+| Medium app | Clean Architecture | Real business logic |
+| Complex app | Hexagonal / Ports & Adapters | Multiple integrations |
+| Distributed | Microservices + events | Scale of teams / domains |
 
-**Regla:** empezá simple. Migrá cuando el dolor sea real, no anticipado.
+**Rule:** start simple. Migrate when the pain is real, not anticipated.
 
 ---
 
-## Protocolo de decisión de arquitectura
+## Architecture decision protocol
 
-Ante cada decisión significativa:
+For every significant decision:
 
 ```
-🏗️ DECISIÓN: [título]
+🏗️ DECISION: [title]
 
-Contexto: [fuerza que genera la decisión]
+Context: [the force driving the decision]
 
-Opción A — [nombre]
-  ✓ [ventaja]
-  ✗ [desventaja]
+Option A — [name]
+  ✓ [advantage]
+  ✗ [drawback]
 
-Opción B — [nombre]
-  ✓ [ventaja]
-  ✗ [desventaja]
+Option B — [name]
+  ✓ [advantage]
+  ✗ [drawback]
 
-Recomendación: [opción] porque [razón técnica]
+Recommendation: [option] because [technical reason]
 
-¿Confirmás?
+Do you confirm?
 ```
 
-Después de confirmar → crear ADR.
+After confirming → create an ADR.
 
 ---
 
 ## ADR (Architecture Decision Record)
 
-Carpeta: `docs/adr/ADR-XXX-titulo-kebab.md`
+Folder: `docs/adr/ADR-XXX-kebab-title.md`
 
 ```markdown
-# ADR-001: [Título]
+# ADR-001: [Title]
 
-**Estado:** Aceptado | Propuesto | Deprecado
-**Fecha:** YYYY-MM-DD
+**Status:** Accepted | Proposed | Deprecated
+**Date:** YYYY-MM-DD
 
-## Contexto
-[Qué fuerza o problema genera esta decisión]
+## Context
+[What force or problem drives this decision]
 
-## Decisión
-[Qué decidimos hacer]
+## Decision
+[What we decided to do]
 
-## Consecuencias
-### Positivas
+## Consequences
+### Positive
 - ...
-### Negativas / Tradeoffs
+### Negative / Tradeoffs
 - ...
 
-## Alternativas descartadas
-- [Alternativa A]: descartada porque ...
+## Rejected alternatives
+- [Alternative A]: rejected because ...
 ```
 
 ---
 
-## Señales de alerta arquitectónica
+## Architectural warning signs
 
-| Señal | Problema | Solución |
+| Sign | Problem | Solution |
 |-------|---------|---------|
-| Lógica de negocio en controller/route | Violación de capas | Mover a use case |
-| Use case que importa ORM directamente | Violación de dependencia | Extraer port + adapter |
-| Entidad que conoce el framework | Dominio contaminado | Separar entity de model ORM |
-| Servicio que hace todo | God Object | Dividir por responsabilidad |
-| Tests que mockean la DB en use cases | Test acoplado a infra | Usar fake repository |
+| Business logic in a controller/route | Layer violation | Move it to a use case |
+| Use case importing the ORM directly | Dependency violation | Extract a port + adapter |
+| Entity that knows the framework | Contaminated domain | Separate the entity from the ORM model |
+| Service that does everything | God Object | Split by responsibility |
+| Tests that mock the DB in use cases | Test coupled to infra | Use a fake repository |
 
 ---
 
-## Patrones clave
+## Key patterns
 
 ### Port & Adapter (Hexagonal)
 ```
@@ -125,13 +130,13 @@ Carpeta: `docs/adr/ADR-XXX-titulo-kebab.md`
                                     [Adapter: real impl]
 ```
 
-### CQRS básico
+### Basic CQRS
 ```
 Commands → Write side → Domain → Events
-Queries  → Read side  → Projections (optimizadas para lectura)
+Queries  → Read side  → Projections (optimized for reading)
 ```
 
-### Event-driven (cuando hay múltiples consumidores)
+### Event-driven (when there are multiple consumers)
 ```
 Producer → Event Bus → Consumer A
                     → Consumer B
@@ -140,11 +145,11 @@ Producer → Event Bus → Consumer A
 
 ---
 
-## Checklist antes de implementar
+## Checklist before implementing
 
-- [ ] ¿Entendemos el problema completamente?
-- [ ] ¿Hay un ADR para las decisiones no obvias?
-- [ ] ¿Las capas tienen responsabilidades claras?
-- [ ] ¿El dominio está libre de dependencias externas?
-- [ ] ¿Los tests pueden correr sin infra externa?
-- [ ] ¿La solución es la más simple que resuelve el problema?
+- [ ] Do we fully understand the problem?
+- [ ] Is there an ADR for the non-obvious decisions?
+- [ ] Do the layers have clear responsibilities?
+- [ ] Is the domain free of external dependencies?
+- [ ] Can the tests run without external infra?
+- [ ] Is the solution the simplest one that solves the problem?

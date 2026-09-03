@@ -1,24 +1,29 @@
+---
+name: role-performance
+description: Performance testing and profiling: load, stress, spike and soak tests with k6 or Locust, SLO-derived thresholds, cProfile bottleneck hunting, symptom-to-cause tables, and a performance stage in CI. Use when writing load tests, setting latency/throughput SLOs, or diagnosing slowness under load before a release.
+---
+
 # Skill: Performance Testing
 
-## Principio base
-Testear correctitud no es testear performance. Un sistema que pasa todos los tests
-puede caerse con 100 usuarios concurrentes. Performance se testea explícitamente.
+## Core principle
+Testing correctness is not testing performance. A system that passes every test
+can still fall over with 100 concurrent users. Performance is tested explicitly.
 
 ---
 
-## Tipos de tests de performance
+## Types of performance tests
 
-| Tipo | Qué mide | Cuándo correr |
+| Type | What it measures | When to run |
 |------|----------|---------------|
-| **Load test** | Comportamiento bajo carga esperada | Antes de cada release |
-| **Stress test** | Punto de quiebre del sistema | Al diseñar la arquitectura |
-| **Spike test** | Respuesta a picos repentinos | Para sistemas con tráfico variable |
-| **Soak test** | Degradación bajo carga sostenida (memory leaks) | Periódicamente en staging |
-| **Baseline** | Métricas de referencia en reposo | Al inicio del proyecto |
+| **Load test** | Behavior under expected load | Before every release |
+| **Stress test** | The system's breaking point | When designing the architecture |
+| **Spike test** | Response to sudden surges | For systems with variable traffic |
+| **Soak test** | Degradation under sustained load (memory leaks) | Periodically in staging |
+| **Baseline** | Reference metrics at rest | At the start of the project |
 
 ---
 
-## k6 — tool principal (recomendado)
+## k6 — main tool (recommended)
 
 ```javascript
 // tests/performance/load_test.js
@@ -26,27 +31,27 @@ import http from 'k6/http'
 import { check, sleep } from 'k6'
 import { Rate, Trend } from 'k6/metrics'
 
-// Métricas custom
+// Custom metrics
 const errorRate = new Rate('error_rate')
 const createUserDuration = new Trend('create_user_duration')
 
 export const options = {
   stages: [
-    { duration: '2m', target: 10 },   // ramp up: 0 → 10 usuarios
-    { duration: '5m', target: 10 },   // carga sostenida: 10 usuarios
-    { duration: '2m', target: 50 },   // ramp up: 10 → 50 usuarios
-    { duration: '5m', target: 50 },   // carga sostenida: 50 usuarios
+    { duration: '2m', target: 10 },   // ramp up: 0 → 10 users
+    { duration: '5m', target: 10 },   // sustained load: 10 users
+    { duration: '2m', target: 50 },   // ramp up: 10 → 50 users
+    { duration: '5m', target: 50 },   // sustained load: 50 users
     { duration: '2m', target: 0 },    // ramp down
   ],
   thresholds: {
-    http_req_duration: ['p(95)<500'],  // 95% de requests < 500ms
-    http_req_failed: ['rate<0.01'],    // < 1% de errores
+    http_req_duration: ['p(95)<500'],  // 95% of requests < 500ms
+    http_req_failed: ['rate<0.01'],    // < 1% errors
     error_rate: ['rate<0.05'],
   },
 }
 
 export default function () {
-  // Crear usuario
+  // Create user
   const start = Date.now()
   const res = http.post(
     'http://localhost:8080/users',
@@ -68,26 +73,26 @@ export default function () {
 ```
 
 ```bash
-# Correr test
+# Run the test
 k6 run tests/performance/load_test.js
 
-# Con output a influxdb para Grafana
+# With output to influxdb for Grafana
 k6 run --out influxdb=http://localhost:8086/k6 tests/performance/load_test.js
 ```
 
 ---
 
-## Locust — alternativa Python
+## Locust — Python alternative
 
 ```python
 # tests/performance/locustfile.py
 from locust import HttpUser, task, between
 
 class UserBehavior(HttpUser):
-    wait_time = between(1, 3)  # espera entre requests
+    wait_time = between(1, 3)  # wait between requests
 
     def on_start(self):
-        # Setup por usuario virtual
+        # Setup per virtual user
         self.token = self.login()
 
     def login(self) -> str:
@@ -97,7 +102,7 @@ class UserBehavior(HttpUser):
         })
         return res.json()["token"]
 
-    @task(3)  # peso: se ejecuta 3x más que otros tasks
+    @task(3)  # weight: runs 3x more often than other tasks
     def get_products(self):
         self.client.get("/products", headers={"Authorization": f"Bearer {self.token}"})
 
@@ -110,7 +115,7 @@ class UserBehavior(HttpUser):
 ```
 
 ```bash
-# UI web en localhost:8089
+# Web UI at localhost:8089
 locust -f tests/performance/locustfile.py --host=http://localhost:8080
 
 # Headless
@@ -120,25 +125,25 @@ locust -f tests/performance/locustfile.py --host=http://localhost:8080 \
 
 ---
 
-## SLOs — definir antes de testear
+## SLOs — define them before testing
 
 ```yaml
-# Definir los SLOs del servicio antes de escribir los tests
+# Define the service SLOs before writing the tests
 slos:
-  availability: 99.9%          # máximo 8.7h de downtime por año
+  availability: 99.9%          # at most 8.7h of downtime per year
   latency:
     p50: < 100ms
     p95: < 500ms
     p99: < 2000ms
   error_rate: < 0.1%
-  throughput: > 1000 req/s     # capacidad mínima esperada
+  throughput: > 1000 req/s     # minimum expected capacity
 ```
 
-Los thresholds de k6/Locust deben reflejar estos SLOs.
+The k6/Locust thresholds must reflect these SLOs.
 
 ---
 
-## Profiling — encontrar el cuello de botella
+## Profiling — finding the bottleneck
 
 ```python
 # Python: cProfile + snakeviz
@@ -148,39 +153,39 @@ import pstats
 profiler = cProfile.Profile()
 profiler.enable()
 
-# código a profilear
+# code to profile
 result = expensive_operation()
 
 profiler.disable()
 stats = pstats.Stats(profiler)
 stats.sort_stats('cumulative')
-stats.print_stats(20)  # top 20 funciones más lentas
+stats.print_stats(20)  # top 20 slowest functions
 ```
 
 ```bash
-# Visualizar con snakeviz
+# Visualize with snakeviz
 pip install snakeviz
 python -m cProfile -o output.prof my_script.py
 snakeviz output.prof
 ```
 
-### Señales de problemas comunes
+### Signals of common problems
 
-| Síntoma | Causa probable | Investigar |
+| Symptom | Likely cause | Investigate |
 |---------|---------------|-----------|
-| Latencia sube con el tiempo | Memory leak | Heap profiler, GC metrics |
-| Latencia alta solo en p99 | Outliers / GC pauses | Trace p99 requests |
-| Throughput bajo con CPU baja | I/O bound | Queries lentas, llamadas externas |
-| Throughput bajo con CPU alta | CPU bound | Profiler de CPU |
-| Latencia sube bajo carga | Contención de locks | DB connection pool, mutex |
-| Errores 503 bajo carga | Capacity limit | Auto-scaling config |
+| Latency grows over time | Memory leak | Heap profiler, GC metrics |
+| High latency only at p99 | Outliers / GC pauses | Trace p99 requests |
+| Low throughput with low CPU | I/O bound | Slow queries, external calls |
+| Low throughput with high CPU | CPU bound | CPU profiler |
+| Latency grows under load | Lock contention | DB connection pool, mutex |
+| 503 errors under load | Capacity limit | Auto-scaling config |
 
 ---
 
-## Performance en CI
+## Performance in CI
 
 ```yaml
-# .github/workflows/ci.yml — agregar stage de performance
+# .github/workflows/ci.yml — add a performance stage
 performance:
   name: Performance Baseline
   runs-on: ubuntu-latest
@@ -196,30 +201,30 @@ performance:
         filename: tests/performance/baseline.js
     - name: Assert thresholds
       run: |
-        # Falla el pipeline si los SLOs no se cumplen
-        # k6 ya maneja esto con los thresholds definidos
+        # Fail the pipeline if the SLOs aren't met
+        # k6 already handles this with the defined thresholds
         echo "Performance check complete"
 ```
 
 ---
 
-## Checklist antes de release
+## Checklist before release
 
-- [ ] Load test con carga esperada pasa los SLOs
-- [ ] Stress test identifica el punto de quiebre (¿cuánto aguanta?)
-- [ ] Sin memory leaks en soak test de 30 minutos
-- [ ] Queries de DB tienen EXPLAIN ANALYZE revisado
-- [ ] Índices creados para los access patterns de producción
-- [ ] Connection pool dimensionado para la carga esperada
-- [ ] Auto-scaling configurado con métricas correctas
+- [ ] Load test at the expected load meets the SLOs
+- [ ] Stress test identifies the breaking point (how much can it take?)
+- [ ] No memory leaks in a 30-minute soak test
+- [ ] DB queries have had EXPLAIN ANALYZE reviewed
+- [ ] Indexes created for the production access patterns
+- [ ] Connection pool sized for the expected load
+- [ ] Auto-scaling configured with the right metrics
 
 ---
 
-## Decisiones comunes en Performance
+## Common Performance decisions
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+Apply the decision protocol from CLAUDE.md when facing:
 - **Tool:** k6 vs Locust vs Gatling vs JMeter
-- **Dónde correr:** local vs CI vs ambiente dedicado
-- **SLOs:** definir p95 y p99 según tipo de operación
-- **Caching:** qué cachear, TTL, estrategia de invalidación
-- **DB indexes:** cuáles crear según los access patterns reales
+- **Where to run:** local vs CI vs a dedicated environment
+- **SLOs:** define p95 and p99 per operation type
+- **Caching:** what to cache, TTL, invalidation strategy
+- **DB indexes:** which ones to create based on the real access patterns

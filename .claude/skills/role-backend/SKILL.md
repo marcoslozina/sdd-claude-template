@@ -1,48 +1,53 @@
+---
+name: role-backend
+description: Language-agnostic REST and GraphQL API design — URL conventions, semantic HTTP status codes, consistent error payloads, cursor vs offset pagination, DB schema and migration rules, N+1 removal, error translation across layers, and request logging. Use when designing or reviewing API endpoints, DB schemas, migrations, auth, rate limiting, or backend error handling.
+---
+
 # Skill: Backend
 
-## Aplica a
-APIs REST y GraphQL, agnóstico de lenguaje y framework.
+## Applies to
+REST and GraphQL APIs, agnostic of language and framework.
 
 ---
 
-## Diseño de API REST
+## REST API design
 
-### Convenciones de URLs
+### URL conventions
 ```
-GET    /users              → listar (con paginación)
-GET    /users/:id          → obtener uno
-POST   /users              → crear
-PUT    /users/:id          → reemplazar completo
-PATCH  /users/:id          → actualizar parcial
-DELETE /users/:id          → eliminar
+GET    /users              → list (with pagination)
+GET    /users/:id          → get one
+POST   /users              → create
+PUT    /users/:id          → full replace
+PATCH  /users/:id          → partial update
+DELETE /users/:id          → delete
 
-# Recursos anidados (máximo 2 niveles)
+# Nested resources (2 levels maximum)
 GET    /users/:id/orders
 POST   /users/:id/orders
 
-# Acciones que no son CRUD → verbos como sub-recurso
+# Non-CRUD actions → verbs as sub-resources
 POST   /users/:id/activate
 POST   /orders/:id/cancel
 ```
 
-### Códigos HTTP semánticos
-| Situación | Código |
+### Semantic HTTP status codes
+| Situation | Code |
 |-----------|--------|
-| Creación exitosa | 201 Created |
-| Operación sin respuesta | 204 No Content |
-| Recurso no encontrado | 404 Not Found |
-| Input inválido | 422 Unprocessable Entity |
-| Sin permisos | 403 Forbidden |
-| No autenticado | 401 Unauthorized |
-| Conflicto de estado | 409 Conflict |
-| Error del servidor | 500 Internal Server Error |
+| Successful creation | 201 Created |
+| Operation with no response body | 204 No Content |
+| Resource not found | 404 Not Found |
+| Invalid input | 422 Unprocessable Entity |
+| No permission | 403 Forbidden |
+| Not authenticated | 401 Unauthorized |
+| State conflict | 409 Conflict |
+| Server error | 500 Internal Server Error |
 
-### Formato de error consistente
+### Consistent error format
 ```json
 {
   "error": {
     "code": "USER_NOT_FOUND",
-    "message": "No se encontró un usuario con id abc-123",
+    "message": "No user found with id abc-123",
     "details": []
   }
 }
@@ -50,10 +55,10 @@ POST   /orders/:id/cancel
 
 ---
 
-## Paginación
+## Pagination
 
 ```json
-// Cursor-based (preferido para datasets grandes o que cambian)
+// Cursor-based (preferred for large or changing datasets)
 GET /users?cursor=eyJpZCI6MTAwfQ&limit=20
 
 {
@@ -64,7 +69,7 @@ GET /users?cursor=eyJpZCI6MTAwfQ&limit=20
   }
 }
 
-// Offset (simple, para tablas admin estáticas)
+// Offset (simple, for static admin tables)
 GET /users?page=2&per_page=20
 
 {
@@ -77,26 +82,26 @@ GET /users?page=2&per_page=20
 }
 ```
 
-**Cursor-based** para feeds, listas grandes, datos que se actualizan.
-**Offset** para admin panels, reportes, datasets estáticos.
+**Cursor-based** for feeds, large lists, data that keeps updating.
+**Offset** for admin panels, reports, static datasets.
 
 ---
 
-## Base de datos
+## Database
 
-### Reglas de esquema
-- Primary keys: UUIDs (no autoincrement expuesto en API)
-- Timestamps: `created_at`, `updated_at` en toda tabla
-- Soft delete: columna `deleted_at` en lugar de DELETE físico cuando hay auditoría
-- Índices en: foreign keys, campos de búsqueda frecuente, campos de ordenamiento
+### Schema rules
+- Primary keys: UUIDs (no autoincrement exposed in the API)
+- Timestamps: `created_at`, `updated_at` on every table
+- Soft delete: a `deleted_at` column instead of a physical DELETE when auditing is required
+- Indexes on: foreign keys, frequently searched fields, sorting fields
 
-### Migraciones
-- Siempre migraciones versionadas (Alembic, Flyway, Liquibase)
-- Cada migración: un cambio atómico
-- Sin lógica de negocio en migraciones
-- Migraciones backwards-compatible cuando sea posible
+### Migrations
+- Always versioned migrations (Alembic, Flyway, Liquibase)
+- Each migration: one atomic change
+- No business logic in migrations
+- Backwards-compatible migrations whenever possible
 
-### N+1 — detectar y eliminar
+### N+1 — detect and eliminate
 ```
 ❌ N+1:
   for user in users:         # 1 query
@@ -108,53 +113,53 @@ GET /users?page=2&per_page=20
 
 ---
 
-## Manejo de errores
+## Error handling
 
 ```
                   ┌─────────────────────────────┐
-Request inválido  │ Validar en entry point (422) │
+Invalid request   │ Validate at entry point (422)│
                   └─────────────┬───────────────┘
-                                │ input limpio
+                                │ clean input
                   ┌─────────────▼───────────────┐
-Error de negocio  │ Excepción de dominio         │ → 409 / 404 / 422
+Business error    │ Domain exception             │ → 409 / 404 / 422
                   └─────────────┬───────────────┘
                                 │
                   ┌─────────────▼───────────────┐
-Error de infra    │ Adapter captura y traduce    │ → 500 + log
+Infra error       │ Adapter catches and translates│ → 500 + log
                   └─────────────────────────────┘
 ```
 
-Nunca dejar que excepciones de infraestructura (SQL, HTTP, timeout) lleguen al cliente sin traducir.
+Never let infrastructure exceptions (SQL, HTTP, timeout) reach the client untranslated.
 
 ---
 
-## Observabilidad mínima
+## Minimum observability
 
 ```python
-# Cada request debe loggear:
+# Every request must log:
 {
-  "request_id": "uuid",          # trazabilidad
+  "request_id": "uuid",          # traceability
   "method": "POST",
   "path": "/users",
   "status": 201,
   "duration_ms": 45,
-  "user_id": "abc"               # contexto de negocio
+  "user_id": "abc"               # business context
 }
 
-# Nunca loggear:
+# Never log:
 # - passwords, tokens, API keys
-# - datos personales completos (PII)
-# - payloads completos en producción
+# - full personal data (PII)
+# - full payloads in production
 ```
 
 ---
 
-## Decisiones comunes en Backend
+## Common Backend decisions
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+Apply the decision protocol from CLAUDE.md when facing:
 - **API style:** REST vs GraphQL vs gRPC vs tRPC
-- **Auth:** JWT vs sesiones vs OAuth2
-- **Paginación:** cursor vs offset
-- **Queue:** sync vs async con cola
-- **Cache:** dónde y qué cachear, invalidación
-- **Rate limiting:** por usuario vs por IP vs por endpoint
+- **Auth:** JWT vs sessions vs OAuth2
+- **Pagination:** cursor vs offset
+- **Queue:** sync vs async with a queue
+- **Cache:** where and what to cache, invalidation
+- **Rate limiting:** per user vs per IP vs per endpoint

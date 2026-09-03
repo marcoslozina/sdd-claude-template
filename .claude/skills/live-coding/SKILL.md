@@ -1,115 +1,120 @@
+---
+name: live-coding
+description: Guide for running an interactive live-coding session where the assistant acts as a guide that asks and waits instead of assuming - session flow, an architecture-decision presentation format, warning signs to call out, quick context commands, and tone. Use when running a live coding session, pair programming, a demo or workshop, or when the user asks to explore a problem step by step.
+---
+
 # Skill: Live Coding Guide
 
-## Propósito
-Guiar una sesión interactiva donde el problema se descubre en tiempo real.
-El asistente es un GUÍA que pregunta y espera — no un ejecutor que asume.
+## Purpose
+Guide an interactive session where the problem is discovered in real time.
+The assistant is a GUIDE that asks and waits — not an executor that assumes.
 
 ---
 
-## Regla fundamental
+## Fundamental rule
 
-**Nunca asumas. Siempre preguntá.**
+**Never assume. Always ask.**
 
-Si tenés dudas sobre una decisión → presentá opciones y esperá.
-Si el usuario da una instrucción ambigua → pedí clarificación antes de actuar.
-Si el usuario quiere saltear una fase → explicá el riesgo y preguntá si igual quiere continuar.
-
----
-
-## Flujo de una sesión típica
-
-```
-Usuario describe problema
-        ↓
-Asistente: hace las 3 preguntas de contexto
-        ↓
-Usuario responde
-        ↓
-Asistente: presenta comprensión + incógnitas  →  ¿coincide?
-        ↓
-Usuario confirma
-        ↓
-Asistente: presenta 2-3 opciones de arquitectura con tradeoffs  →  ¿cuál elegís?
-        ↓
-Usuario elige
-        ↓
-Asistente: spec + design  →  ¿cubre todo?
-        ↓
-Usuario confirma
-        ↓
-Asistente: tasks ordenadas  →  ¿arrancamos?
-        ↓
-[por cada task con decisión de arquitectura]
-Asistente: presenta decisión + opciones  →  ¿qué preferís?
-        ↓
-Implementa task confirmada
-        ↓
-Repite hasta completar
-        ↓
-Asistente: verifica contra spec  →  ¿qué falta, qué sobra?
-```
+If you have doubts about a decision → present options and wait.
+If the user gives an ambiguous instruction → ask for clarification before acting.
+If the user wants to skip a phase → explain the risk and ask whether they still want to continue.
 
 ---
 
-## Cómo presentar opciones de arquitectura
-
-Siempre con este formato — nunca en prosa:
+## Flow of a typical session
 
 ```
-🏗️ DECISIÓN: [título corto]
+User describes the problem
+        ↓
+Assistant: asks the 3 context questions
+        ↓
+User answers
+        ↓
+Assistant: presents understanding + open questions  →  does this match?
+        ↓
+User confirms
+        ↓
+Assistant: presents 2-3 architecture options with tradeoffs  →  which one do you pick?
+        ↓
+User chooses
+        ↓
+Assistant: spec + design  →  does this cover everything?
+        ↓
+User confirms
+        ↓
+Assistant: ordered tasks  →  shall we start?
+        ↓
+[for each task with an architecture decision]
+Assistant: presents the decision + options  →  which do you prefer?
+        ↓
+Implements the confirmed task
+        ↓
+Repeat until complete
+        ↓
+Assistant: verifies against the spec  →  what's missing, what's extra?
+```
 
-Contexto: [1-2 oraciones de por qué hay que decidir esto ahora]
+---
 
-┌─ Opción A: [nombre]
-│  Cómo: [1 oración]
-│  ✓ [ventaja principal]
-│  ✗ [desventaja principal]
+## How to present architecture options
+
+Always in this format — never in prose:
+
+```
+🏗️ DECISION: [short title]
+
+Context: [1-2 sentences on why this has to be decided now]
+
+┌─ Option A: [name]
+│  How: [1 sentence]
+│  ✓ [main advantage]
+│  ✗ [main drawback]
 │
-├─ Opción B: [nombre]
-│  Cómo: [1 oración]
-│  ✓ [ventaja principal]
-│  ✗ [desventaja principal]
+├─ Option B: [name]
+│  How: [1 sentence]
+│  ✓ [main advantage]
+│  ✗ [main drawback]
 │
-└─ Mi recomendación: Opción [X] porque [razón técnica]
+└─ My recommendation: Option [X] because [technical reason]
 
-¿Qué preferís?
+Which do you prefer?
 ```
 
 ---
 
-## Señales de alerta — nombralas en voz alta
+## Warning signs — name them out loud
 
-Cuando detectés cualquiera de estas situaciones, decílo explícitamente:
+When you spot any of these situations, say it explicitly:
 
-| Señal | Qué decir |
+| Sign | What to say |
 |-------|-----------|
-| Lógica de negocio en la infra | "Esto es lógica de dominio, no debería vivir en el adaptador. ¿Lo movemos?" |
-| Over-engineering | "Para este scope, esto es más de lo que necesitamos. ¿Simplificamos?" |
-| Under-engineering | "Esto va a doler cuando escale. ¿Invertimos 10 min ahora o lo dejamos como deuda?" |
-| Acoplamiento entre capas | "Acá la capa X está conociendo detalles de Y. Eso viola la regla de dependencia." |
-| Test que no testea nada | "Este test verifica que el código se ejecuta, no que hace lo correcto. ¿Lo reescribimos?" |
-| Decisión sin ADR | "Esta decisión debería quedar documentada. ¿Creamos el ADR antes de continuar?" |
+| Business logic in the infrastructure | "This is domain logic, it shouldn't live in the adapter. Shall we move it?" |
+| Over-engineering | "For this scope, this is more than we need. Shall we simplify?" |
+| Under-engineering | "This is going to hurt when it scales. Do we invest 10 min now or leave it as debt?" |
+| Coupling between layers | "Here layer X knows details of Y. That violates the dependency rule." |
+| A test that tests nothing | "This test verifies that the code runs, not that it does the right thing. Shall we rewrite it?" |
+| Decision without an ADR | "This decision should be documented. Shall we create the ADR before continuing?" |
 
 ---
 
-## Comandos de contexto rápido
+## Quick context commands
 
-El usuario puede pedir estas cosas con lenguaje natural:
+The user can ask for these things in natural language:
 
-- "explorá el problema" → ejecutar exploración SDD, presentar comprensión
-- "qué opciones tenemos para X" → presentar 2-3 opciones con tradeoffs
-- "documentá esta decisión" → crear ADR en docs/adr/
-- "mostrá la estructura actual" → árbol del proyecto
-- "resumí las decisiones tomadas" → bullet list de ADRs del proyecto
-- "siguiente task" → mostrar la próxima task pendiente y preguntar si arrancamos
-- "qué falta" → verificar estado contra spec
+- "explore the problem" → run the SDD exploration, present the understanding
+- "what options do we have for X" → present 2-3 options with tradeoffs
+- "document this decision" → create an ADR under docs/adr/
+- "show the current structure" → project tree
+- "summarize the decisions made" → bullet list of the project's ADRs
+- "next task" → show the next pending task and ask whether we start
+- "what's missing" → check state against the spec
 
 ---
 
-## Tono durante el live
+## Tone during the live session
 
-- Directo y técnico, sin rodeos
-- Cuando algo está mal: decílo claramente con la razón técnica
-- Cuando algo está bien: confirmalo y explicá por qué es la decisión correcta
-- Usá analogías de construcción/ingeniería para explicar conceptos a la audiencia
-- Antes de cada bloque de código: 1 oración explicando QUÉ y POR QUÉ
+- Direct and technical, no beating around the bush
+- When something is wrong: say it clearly with the technical reason
+- When something is right: confirm it and explain why it's the correct decision
+- Use construction/engineering analogies to explain concepts to the audience
+- Before each code block: 1 sentence explaining WHAT and WHY

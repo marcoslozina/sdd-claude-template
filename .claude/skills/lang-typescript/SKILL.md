@@ -1,9 +1,14 @@
+---
+name: lang-typescript
+description: TypeScript standards for frontend and backend - strict tsconfig, no any, discriminated unions and branded types, Clean Architecture layout for Node, Zod validation, typed React components and hooks, Vitest/Jest tests. Use when writing or reviewing .ts/.tsx code, tsconfig.json, React components, or Node/Bun services.
+---
+
 # Skill: TypeScript
 
-## Aplica a
-Frontend (React) y Backend (Node.js / Bun). Las convenciones son las mismas.
+## Applies to
+Frontend (React) and Backend (Node.js / Bun). The conventions are the same.
 
-## Configuración base
+## Base configuration
 
 ```json
 // tsconfig.json
@@ -18,59 +23,59 @@ Frontend (React) y Backend (Node.js / Bun). Las convenciones son las mismas.
 }
 ```
 
-Sin `any`. Sin `// @ts-ignore`. Sin `as` a ciegas.
+No `any`. No `// @ts-ignore`. No blind `as`.
 
 ---
 
-## Convenciones de tipos
+## Type conventions
 
 ```typescript
-// ✅ Tipos explícitos en funciones públicas
+// ✅ Explicit types on public functions
 function findUser(id: UserId): Promise<User | null>
 
-// ✅ Discriminated unions para estados
+// ✅ Discriminated unions for states
 type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
-// ✅ Branded types para IDs
+// ✅ Branded types for IDs
 type UserId = string & { readonly _brand: 'UserId' }
 function UserId(raw: string): UserId { return raw as UserId }
 
-// ✅ Readonly para objetos de dominio
+// ✅ Readonly for domain objects
 type User = Readonly<{
   id: UserId
   name: string
   email: string
 }>
 
-// ❌ Nunca
+// ❌ Never
 const user: any = getUser()
 function process(data: object): any
 ```
 
 ---
 
-## Backend Node.js (Clean Architecture)
+## Node.js Backend (Clean Architecture)
 
 ```
 src/
   domain/
-    entities/        # tipos e interfaces de negocio
-    ports/           # interfaces de repositorios y servicios
+    entities/        # business types and interfaces
+    ports/           # repository and service interfaces
   application/
-    use-cases/       # lógica de aplicación
+    use-cases/       # application logic
   infrastructure/
-    adapters/        # implementaciones concretas
+    adapters/        # concrete implementations
     db/              # Prisma / Drizzle
-    http/            # clientes externos
+    http/            # external clients
   api/
     routes/          # Fastify / Express routers
-    schemas/         # Zod para validación de entrada
+    schemas/         # Zod for input validation
 tests/
 ```
 
-### Port (interfaz)
+### Port (interface)
 ```typescript
 // domain/ports/user-repository.ts
 export interface UserRepository {
@@ -93,7 +98,7 @@ export class CreateUserUseCase {
 }
 ```
 
-### Validación con Zod
+### Validation with Zod
 ```typescript
 import { z } from 'zod'
 
@@ -107,9 +112,9 @@ type CreateUserInput = z.infer<typeof CreateUserSchema>
 
 ---
 
-## Frontend React
+## React Frontend
 
-### Componente tipado
+### Typed component
 ```tsx
 interface ButtonProps {
   label: string
@@ -129,7 +134,7 @@ export const Button = ({ label, variant, isLoading = false, onClick }: ButtonPro
 )
 ```
 
-### Custom hook tipado
+### Typed custom hook
 ```typescript
 function useAsync<T>(fn: () => Promise<T>): AsyncState<T> {
   const [state, setState] = useState<AsyncState<T>>({ status: 'idle' })
@@ -154,7 +159,7 @@ function useAsync<T>(fn: () => Promise<T>): AsyncState<T> {
 
 ```typescript
 // Vitest (frontend) / Jest (backend)
-// Naming: describe qué hace, not cómo
+// Naming: describe what it does, not how
 describe('CreateUserUseCase', () => {
   it('returns user id when input is valid', async () => {
     const repo = new FakeUserRepository()
@@ -175,12 +180,12 @@ describe('CreateUserUseCase', () => {
 
 ---
 
-## Decisiones de arquitectura comunes en TypeScript
+## Common architecture decisions in TypeScript
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+Apply the decision protocol from CLAUDE.md when facing:
 - **Runtime:** Node.js vs Bun vs Deno
-- **Framework HTTP:** Fastify vs Express vs Hono
+- **HTTP framework:** Fastify vs Express vs Hono
 - **ORM/Query:** Prisma vs Drizzle vs Kysely vs raw SQL
-- **Validación:** Zod vs Valibot vs TypeBox
+- **Validation:** Zod vs Valibot vs TypeBox
 - **Bundler:** Vite vs esbuild vs tsup
 - **Test:** Vitest vs Jest

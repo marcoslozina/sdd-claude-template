@@ -1,127 +1,132 @@
+---
+name: role-code-review
+description: Reviewing code with real technical criteria — per-layer checklists (domain, use cases, infrastructure, API), OWASP security and privacy/PII checks, performance and test checklists, design-smell naming, and a severity-tagged feedback format. Use when reviewing a PR or diff, giving code feedback, or gating a merge on security, privacy, or design issues.
+---
+
 # Skill: Code Review
 
-## Rol
-Revisar código con criterio técnico real. Sin comentarios positivos genéricos.
-Cada problema encontrado: descripción, impacto concreto, fix con código.
+## Role
+Review code with real technical criteria. No generic positive comments.
+For every problem found: description, concrete impact, fix with code.
 
 ---
 
-## Checklist por capa
+## Checklist by layer
 
-### Dominio
-- [ ] Entidades sin imports de frameworks o infraestructura
-- [ ] Lógica de negocio en el dominio, no en servicios de aplicación ni adapters
-- [ ] Value objects inmutables y con validación
-- [ ] Excepciones de dominio semánticas (`UserNotFoundError`, no `Exception`)
-- [ ] Nombres que comunican intención del negocio
+### Domain
+- [ ] Entities with no framework or infrastructure imports
+- [ ] Business logic in the domain, not in application services or adapters
+- [ ] Immutable value objects with validation
+- [ ] Semantic domain exceptions (`UserNotFoundError`, not `Exception`)
+- [ ] Names that communicate business intent
 
-### Aplicación (Use Cases)
-- [ ] Use case orquesta, no implementa detalles técnicos
-- [ ] Depende de interfaces (ports), no de implementaciones concretas
-- [ ] Un use case = una responsabilidad
-- [ ] Sin lógica de presentación (formateo, serialización)
+### Application (Use Cases)
+- [ ] The use case orchestrates, it does not implement technical details
+- [ ] Depends on interfaces (ports), not on concrete implementations
+- [ ] One use case = one responsibility
+- [ ] No presentation logic (formatting, serialization)
 
-### Infraestructura
-- [ ] Adapter implementa el port del dominio
-- [ ] Sin lógica de negocio en adapters
-- [ ] Queries optimizadas (no N+1)
-- [ ] Manejo explícito de errores de infra (timeouts, conexiones)
+### Infrastructure
+- [ ] The adapter implements the domain's port
+- [ ] No business logic in adapters
+- [ ] Optimized queries (no N+1)
+- [ ] Explicit handling of infra errors (timeouts, connections)
 
 ### API / Entry Points
-- [ ] Validación de input en el borde (no en el dominio)
-- [ ] Códigos HTTP semánticos (201 vs 200, 422 vs 400)
-- [ ] Sin lógica de negocio en controllers/routes
-- [ ] Manejo de errores centralizado
+- [ ] Input validation at the edge (not in the domain)
+- [ ] Semantic HTTP status codes (201 vs 200, 422 vs 400)
+- [ ] No business logic in controllers/routes
+- [ ] Centralized error handling
 
 ---
 
-## Checklist de seguridad (OWASP)
+## Security checklist (OWASP)
 
-- [ ] **Injection**: inputs sanitizados antes de queries/comandos
-- [ ] **Autenticación**: tokens validados, expiración correcta
-- [ ] **Autorización**: verificación de permisos antes de ejecutar
-- [ ] **Secrets**: ningún secret en código, usar env vars
-- [ ] **Datos sensibles**: no loggear passwords, tokens, PII
-- [ ] **Dependencias**: versiones sin vulnerabilidades conocidas
-- [ ] **Rate limiting**: endpoints públicos con límite de requests
+- [ ] **Injection**: inputs sanitized before queries/commands
+- [ ] **Authentication**: tokens validated, correct expiration
+- [ ] **Authorization**: permission check before executing
+- [ ] **Secrets**: no secret in code, use env vars
+- [ ] **Sensitive data**: never log passwords, tokens, PII
+- [ ] **Dependencies**: versions with no known vulnerabilities
+- [ ] **Rate limiting**: public endpoints with a request limit
 
-## Checklist de privacidad (obligatorio si hay datos de usuarios)
+## Privacy checklist (mandatory if there is user data)
 
-- [ ] **Secrets en código**: escanear con regex antes de aprobar
-  - Patrones: `api_key\s*=\s*["']`, `sk-`, `pk_live_`, `postgres://user:pass@`
-- [ ] **PII en logs**: emails, nombres, IPs completas, documentos → nunca completos
-- [ ] **Data minimization**: la API solo devuelve los campos que el cliente necesita
-- [ ] **Campos sensibles**: passwords, tokens, hashes → nunca en responses
-- [ ] **Cifrado en tránsito**: toda comunicación por HTTPS/TLS
-- [ ] **Cifrado en reposo**: PII crítica cifrada en DB (DNI, tarjetas, datos médicos)
-- [ ] **Retención**: datos con política de expiración definida
+- [ ] **Secrets in code**: scan with regex before approving
+  - Patterns: `api_key\s*=\s*["']`, `sk-`, `pk_live_`, `postgres://user:pass@`
+- [ ] **PII in logs**: emails, names, full IPs, ID documents → never in full
+- [ ] **Data minimization**: the API only returns the fields the client needs
+- [ ] **Sensitive fields**: passwords, tokens, hashes → never in responses
+- [ ] **Encryption in transit**: all communication over HTTPS/TLS
+- [ ] **Encryption at rest**: critical PII encrypted in the DB (national ID, cards, medical data)
+- [ ] **Retention**: data with a defined expiration policy
 
-### Señales de alerta de privacidad — bloquear el PR
+### Privacy warning signs — block the PR
 
-| Señal | Severidad | Acción |
+| Sign | Severity | Action |
 |-------|-----------|--------|
-| Secret hardcodeado | 🔴 Crítico | Bloquear + revocar inmediatamente |
-| Password/token en log | 🔴 Crítico | Bloquear |
-| `password_hash` en response | 🔴 Crítico | Bloquear |
-| Email completo en log | 🟡 Importante | Pedir fix antes de merge |
-| PII sin cifrar en DB | 🟡 Importante | Pedir fix antes de merge |
-| Más datos de los necesarios en response | 🔵 Sugerencia | Comentar en review |
+| Hardcoded secret | 🔴 Critical | Block + revoke immediately |
+| Password/token in a log | 🔴 Critical | Block |
+| `password_hash` in a response | 🔴 Critical | Block |
+| Full email in a log | 🟡 Important | Ask for a fix before merge |
+| Unencrypted PII in the DB | 🟡 Important | Ask for a fix before merge |
+| More data than necessary in a response | 🔵 Suggestion | Comment in the review |
 
 ---
 
-## Checklist de performance
+## Performance checklist
 
-- [ ] Sin N+1 queries (eager loading donde corresponde)
-- [ ] Índices de DB en campos de búsqueda frecuente
-- [ ] Sin allocations innecesarias en loops
-- [ ] Operaciones bloqueantes en threads separados (si aplica)
-- [ ] Cache donde el costo de recomputar es alto
-- [ ] Paginación en endpoints que devuelven listas
-
----
-
-## Checklist de tests
-
-- [ ] Tests que verifican comportamiento, no implementación
-- [ ] Nombres descriptivos: `should_X_when_Y`
-- [ ] Sin lógica condicional en tests
-- [ ] Cada test verifica una sola cosa
-- [ ] Fakes/stubs en lugar de mocks cuando es posible
-- [ ] Tests de integración contra infra real (no H2/SQLite si prod usa Postgres)
-- [ ] Cobertura de edge cases y casos de error, no solo happy path
+- [ ] No N+1 queries (eager loading where appropriate)
+- [ ] DB indexes on frequently searched fields
+- [ ] No unnecessary allocations inside loops
+- [ ] Blocking operations on separate threads (where applicable)
+- [ ] Cache where recomputing is expensive
+- [ ] Pagination on endpoints that return lists
 
 ---
 
-## Señales de mal diseño (detectar y nombrar)
+## Tests checklist
 
-| Señal | Nombre del patrón | Qué decir |
+- [ ] Tests that verify behavior, not implementation
+- [ ] Descriptive names: `should_X_when_Y`
+- [ ] No conditional logic in tests
+- [ ] Each test verifies a single thing
+- [ ] Fakes/stubs instead of mocks whenever possible
+- [ ] Integration tests against real infra (not H2/SQLite if prod uses Postgres)
+- [ ] Coverage of edge cases and error paths, not just the happy path
+
+---
+
+## Bad design signs (detect and name them)
+
+| Sign | Pattern name | What to say |
 |-------|-------------------|-----------|
-| Clase con 500+ líneas | God Object | "Esta clase tiene demasiadas responsabilidades. ¿La dividimos por [X] y [Y]?" |
-| Método con 5+ parámetros | Long Parameter List | "Demasiados parámetros. ¿Los agrupamos en un objeto?" |
-| Comentario que explica QUÉ hace el código | Código no expresivo | "El código debería auto-documentarse. ¿Renombramos para que sea obvio?" |
-| Switch/if-else sobre tipos | Missing polymorphism | "Esto se puede resolver con polimorfismo. ¿Lo refactorizamos?" |
-| Duplicación de lógica | DRY violation | "Esta lógica ya existe en [lugar]. ¿Extraemos?" |
-| Test que nunca puede fallar | Tautological test | "Este test no verifica nada real. ¿Lo reescribimos?" |
+| Class with 500+ lines | God Object | "This class has too many responsibilities. Should we split it by [X] and [Y]?" |
+| Method with 5+ parameters | Long Parameter List | "Too many parameters. Should we group them into an object?" |
+| Comment that explains WHAT the code does | Non-expressive code | "The code should document itself. Should we rename things so it's obvious?" |
+| Switch/if-else over types | Missing polymorphism | "This can be solved with polymorphism. Should we refactor it?" |
+| Duplicated logic | DRY violation | "This logic already exists in [place]. Should we extract it?" |
+| Test that can never fail | Tautological test | "This test doesn't verify anything real. Should we rewrite it?" |
 
 ---
 
-## Formato de feedback
+## Feedback format
 
 ```
-🔴 CRÍTICO — [archivo:línea]
-Problema: [descripción en una línea]
-Impacto: [qué puede pasar si no se corrige]
+🔴 CRITICAL — [file:line]
+Problem: [one-line description]
+Impact: [what can happen if it isn't fixed]
 Fix:
-  [código corregido]
+  [corrected code]
 
-🟡 IMPORTANTE — [archivo:línea]
-Problema: ...
-Impacto: ...
+🟡 IMPORTANT — [file:line]
+Problem: ...
+Impact: ...
 Fix: ...
 
-🔵 SUGERENCIA — [archivo:línea]
-Contexto: ...
-Mejora propuesta: ...
+🔵 SUGGESTION — [file:line]
+Context: ...
+Proposed improvement: ...
 ```
 
-Solo señalar problemas reales. Sin "buen trabajo" ni relleno.
+Only point out real problems. No "good job", no filler.

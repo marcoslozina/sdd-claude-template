@@ -1,26 +1,31 @@
+---
+name: role-rag
+description: RAG pipeline design: chunking sizes, embedding model choice, vector search, summary indexing, contextual embeddings, Claude re-ranking, precision/recall/MRR evaluation, and prompt caching for static docs. Use when building or debugging retrieval over a vector store, or tuning answer quality and grounding.
+---
+
 # Skill: RAG (Retrieval-Augmented Generation)
 
-> Basado en documentación oficial Anthropic: https://docs.anthropic.com/en/docs/build-with-claude/rag
+> Based on the official Anthropic documentation: https://docs.anthropic.com/en/docs/build-with-claude/rag
 
-## Qué es RAG y por qué existe
+## What RAG is and why it exists
 
-Los LLMs tienen dos limitaciones: conocimiento cortado en fecha de entrenamiento
-y sin acceso a información privada/actualizada. RAG resuelve ambos:
+LLMs have two limitations: knowledge frozen at the training cutoff date,
+and no access to private or up-to-date information. RAG solves both:
 
 ```
-Sin RAG: "¿Estado del ticket PROJ-4521?" → adivina o no sabe
+Without RAG: "What's the status of ticket PROJ-4521?" → it guesses or doesn't know
 
-Con RAG:
-  1. Buscar ticket en Jira
-  2. Pasar contenido + pregunta al modelo
-  → Responde con información real
+With RAG:
+  1. Look the ticket up in Jira
+  2. Pass the content + the question to the model
+  → It answers with real information
 ```
 
 ---
 
-## Pipeline RAG — 3 componentes
+## RAG pipeline — 3 components
 
-### 1. Ingesta y chunking
+### 1. Ingestion and chunking
 
 ```python
 def chunk_document(text: str, chunk_size: int = 300, overlap: int = 50) -> list[str]:
@@ -32,19 +37,19 @@ def chunk_document(text: str, chunk_size: int = 300, overlap: int = 50) -> list[
     return chunks
 ```
 
-**Tamaños recomendados por tipo de contenido:**
-| Contenido | Chunk size | Overlap |
+**Recommended sizes by content type:**
+| Content | Chunk size | Overlap |
 |-----------|-----------|---------|
-| Documentación técnica | 200-400 tokens | 50 tokens |
-| Código fuente | Por función/clase | Mínimo |
-| Conversaciones | Por turno | Sin overlap |
-| Artículos | Por párrafo | 1-2 oraciones |
+| Technical documentation | 200-400 tokens | 50 tokens |
+| Source code | Per function/class | Minimal |
+| Conversations | Per turn | No overlap |
+| Articles | Per paragraph | 1-2 sentences |
 
-**Regla:** chunks chicos pierden contexto, chunks grandes desperdician ventana. Testear con tu data.
+**Rule:** small chunks lose context, large chunks waste the window. Test with your own data.
 
 ---
 
-### 2. Embeddings y búsqueda semántica
+### 2. Embeddings and semantic search
 
 ```python
 import voyageai
@@ -59,7 +64,7 @@ class VectorDB:
 
     def index(self, chunks: list[dict]) -> None:
         texts = [f"{c['heading']}\n{c['text']}" for c in chunks]
-        # Batch de 128 para eficiencia
+        # Batches of 128 for efficiency
         all_embeddings = []
         for i in range(0, len(texts), 128):
             batch = self.client.embed(texts[i:i+128], model="voyage-3").embeddings
@@ -68,7 +73,7 @@ class VectorDB:
         self.metadata = chunks
 
     def search(self, query: str, k: int = 5, threshold: float = 0.75) -> list[dict]:
-        # Cache de queries repetidas
+        # Cache for repeated queries
         if query not in self.query_cache:
             self.query_cache[query] = self.client.embed([query], model="voyage-3").embeddings[0]
 
@@ -83,14 +88,14 @@ class VectorDB:
         ][:k]
 ```
 
-**Embedding models recomendados:**
-- General: `voyage-3` (Voyage AI, recomendado por Anthropic)
-- Código: `voyage-code-3`
-- Multilingüe: `voyage-multilingual-2`
+**Recommended embedding models:**
+- General: `voyage-3` (Voyage AI, recommended by Anthropic)
+- Code: `voyage-code-3`
+- Multilingual: `voyage-multilingual-2`
 
 ---
 
-### 3. Generación con contexto
+### 3. Generation with context
 
 ```python
 import anthropic
@@ -99,19 +104,19 @@ client = anthropic.Anthropic()
 db = VectorDB()
 
 def answer(question: str) -> str:
-    # Recuperar contexto relevante
+    # Retrieve relevant context
     results = db.search(question, k=3)
     context = "\n\n---\n\n".join([r["text"] for r in results])
 
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-sonnet-5",
         max_tokens=1024,
-        system="""Respondés preguntas SOLO con el contexto provisto.
-Si la información no está en el contexto, decí explícitamente que no tenés esa información.
-No inventes respuestas ni uses conocimiento externo.""",
+        system="""You answer questions ONLY with the provided context.
+If the information is not in the context, say explicitly that you don't have it.
+Do not make up answers or use outside knowledge.""",
         messages=[{
             "role": "user",
-            "content": f"<context>\n{context}\n</context>\n\nPregunta: {question}"
+            "content": f"<context>\n{context}\n</context>\n\nQuestion: {question}"
         }]
     )
     return response.content[0].text
@@ -119,33 +124,33 @@ No inventes respuestas ni uses conocimiento externo.""",
 
 ---
 
-## Técnicas avanzadas (mejoran precisión)
+## Advanced techniques (they improve precision)
 
 ### Summary Indexing
-Indexar resúmenes + chunks completos por separado.
-Buscar por resumen, devolver chunk completo.
-**Mejora MRR hasta +17.6% según benchmarks oficiales Anthropic.**
+Index summaries and full chunks separately.
+Search over the summaries, return the full chunk.
+**Improves MRR by up to +17.6% according to official Anthropic benchmarks.**
 
 ### Contextual Embeddings
-Usar Claude para generar contexto situacional antes de embeddear cada chunk:
+Use Claude to generate situational context before embedding each chunk:
 
 ```python
 def add_context_to_chunk(chunk: str, doc_summary: str) -> str:
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",  # barato para este paso
+        model="claude-haiku-4-5-20251001",  # cheap for this step
         max_tokens=200,
         messages=[{
             "role": "user",
-            "content": f"""Documento: {doc_summary}
+            "content": f"""Document: {doc_summary}
 Chunk: {chunk}
-Generá una oración que contextualice este chunk dentro del documento."""
+Write one sentence that situates this chunk within the document."""
         }]
     )
     return f"{response.content[0].text}\n\n{chunk}"
 ```
 
-### Re-ranking con Claude
-Recuperar top-10, reordenar por relevancia real antes de pasar al modelo:
+### Re-ranking with Claude
+Retrieve the top-10, reorder by actual relevance before passing them to the model:
 
 ```python
 def rerank(query: str, candidates: list[str], top_k: int = 3) -> list[str]:
@@ -155,8 +160,8 @@ def rerank(query: str, candidates: list[str], top_k: int = 3) -> list[str]:
         messages=[{
             "role": "user",
             "content": f"""Query: {query}
-Candidatos: {json.dumps(list(enumerate(candidates)))}
-Devolvé los índices de los {top_k} más relevantes en orden, como JSON array."""
+Candidates: {json.dumps(list(enumerate(candidates)))}
+Return the indices of the {top_k} most relevant ones, in order, as a JSON array."""
         }]
     )
     indices = json.loads(response.content[0].text)
@@ -165,12 +170,12 @@ Devolvé los índices de los {top_k} más relevantes en orden, como JSON array."
 
 ---
 
-## Métricas de evaluación
+## Evaluation metrics
 
 ```python
-# Precision: de lo que recuperé, ¿cuánto era correcto?
-# Recall: de lo correcto, ¿cuánto recuperé?
-# MRR: ¿qué tan arriba aparece el primer resultado correcto?
+# Precision: of what I retrieved, how much was correct?
+# Recall: of what was correct, how much did I retrieve?
+# MRR: how high up does the first correct result appear?
 
 def mrr(retrieved: list[str], relevant: set[str]) -> float:
     for i, item in enumerate(retrieved, 1):
@@ -183,48 +188,48 @@ def precision_recall(retrieved: list[str], relevant: set[str]) -> tuple[float, f
     return hits / len(retrieved), hits / len(relevant)
 ```
 
-**Baseline → optimizado (benchmarks oficiales Anthropic):**
+**Baseline → optimized (official Anthropic benchmarks):**
 - Precision: 0.43 → 0.44 (+2.3%)
 - Recall: 0.66 → 0.69 (+4.5%)
 - MRR: 0.74 → 0.87 (+17.6%)
-- Accuracy end-to-end: 71% → 81% (+10%)
+- End-to-end accuracy: 71% → 81% (+10%)
 
 ---
 
-## Cuándo RAG no es la solución
+## When RAG is not the solution
 
-RAG funciona bien para búsqueda de información.
-Funciona mal cuando:
-- La pregunta requiere razonamiento sobre información que no existe en los docs
-- La base de conocimiento tiene información contradictoria (problema de gobernanza)
-- La pregunta requiere datos en tiempo real (usar tool use + API en su lugar)
+RAG works well for information retrieval.
+It works badly when:
+- The question requires reasoning over information that isn't in the docs
+- The knowledge base holds contradictory information (a governance problem)
+- The question requires real-time data (use tool use + an API instead)
 
 ---
 
-## Integración con Prompt Caching
+## Integration with Prompt Caching
 
-Para RAG con contexto repetido (misma base de docs):
+For RAG with repeated context (the same document base):
 
 ```python
 system = [
-    {"type": "text", "text": "Respondés basándote solo en el contexto provisto."},
+    {"type": "text", "text": "You answer based only on the provided context."},
     {
         "type": "text",
         "text": f"<knowledge_base>{static_docs}</knowledge_base>",
-        "cache_control": {"type": "ephemeral"}  # cachea los docs estáticos
+        "cache_control": {"type": "ephemeral"}  # caches the static docs
     }
 ]
 ```
 
-**Ahorra hasta 90% en tokens de entrada para docs que se repiten entre requests.**
+**Saves up to 90% of input tokens for docs that repeat across requests.**
 
 ---
 
-## Decisiones comunes en RAG
+## Common RAG decisions
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+Apply the decision protocol from CLAUDE.md when facing:
 - **Vector DB:** Pinecone vs Weaviate vs Chroma vs pgvector
 - **Embedding model:** Voyage AI vs OpenAI Ada vs Cohere
-- **Chunk strategy:** fijo vs semántico vs por estructura del doc
-- **Reranking:** cross-encoder vs Claude vs BM25 híbrido
-- **Gobernanza de docs:** versionado, actualización, deduplicación
+- **Chunk strategy:** fixed vs semantic vs by document structure
+- **Reranking:** cross-encoder vs Claude vs hybrid BM25
+- **Doc governance:** versioning, updates, deduplication

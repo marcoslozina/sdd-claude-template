@@ -1,74 +1,79 @@
-# Skill: Seguridad y Privacidad en Código
+---
+name: role-privacy
+description: Security and privacy in code: sensitive-data classification, keeping secrets out of source, PII-safe logging and API responses, field-level encryption, data minimization and retention, secret scanning (pre-commit, gitleaks), and leaked-secret response. Use when handling PII, credentials, or user data, or reviewing code for leaks.
+---
 
-## Principio base
-Privacy by design. La privacidad no se agrega al final — es una restricción de diseño desde el inicio.
-Un leak de datos no es solo un bug. Es un incidente con consecuencias legales y de confianza.
+# Skill: Security and Privacy in Code
+
+## Core principle
+Privacy by design. Privacy isn't added at the end — it's a design constraint from the start.
+A data leak isn't just a bug. It's an incident with legal and trust consequences.
 
 ---
 
-## Clasificación de datos sensibles
+## Classification of sensitive data
 
-Antes de escribir cualquier código que maneje datos, clasificar:
+Before writing any code that handles data, classify it:
 
-| Nivel | Tipo de dato | Ejemplos | Tratamiento |
+| Level | Data type | Examples | Handling |
 |-------|-------------|---------|-------------|
-| 🔴 Crítico | Credenciales | Passwords, API keys, tokens, certificados | Nunca en código, logs ni DB sin hash |
-| 🔴 Crítico | PII sensible | DNI, pasaporte, datos médicos, biometría | Cifrado en reposo, acceso auditado |
-| 🟡 Sensible | PII básica | Nombre, email, teléfono, dirección | Cifrado en tránsito, no loggear completo |
-| 🟡 Sensible | Financiero | Tarjetas, CBU, montos de transacciones | PCI-DSS si aplica, tokenizar |
-| 🟢 Interno | Datos de negocio | IDs internos, métricas | Acceso controlado por rol |
-| ⚪ Público | Datos públicos | Precios, catálogos | Sin restricciones especiales |
+| 🔴 Critical | Credentials | Passwords, API keys, tokens, certificates | Never in code, logs, or the DB without hashing |
+| 🔴 Critical | Sensitive PII | National ID, passport, medical data, biometrics | Encrypted at rest, audited access |
+| 🟡 Sensitive | Basic PII | Name, email, phone, address | Encrypted in transit, never log it in full |
+| 🟡 Sensitive | Financial | Cards, bank account numbers, transaction amounts | PCI-DSS if applicable, tokenize |
+| 🟢 Internal | Business data | Internal IDs, metrics | Role-based access control |
+| ⚪ Public | Public data | Prices, catalogs | No special restrictions |
 
 ---
 
-## Reglas de código — no negociables
+## Code rules — non-negotiable
 
-### Secrets — detección automática
+### Secrets — automatic detection
 
 ```python
-# ❌ Patrones que NUNCA deben aparecer en código
+# ❌ Patterns that must NEVER appear in code
 API_KEY = "sk-..."
 SECRET = "eyJ..."
 PASSWORD = "hunter2"
 DATABASE_URL = "postgres://user:pass@..."
 
-# ✅ Siempre desde el entorno
+# ✅ Always from the environment
 import os
-API_KEY = os.environ["API_KEY"]          # falla en startup si no existe → intencional
+API_KEY = os.environ["API_KEY"]          # fails at startup if missing → intentional
 DATABASE_URL = os.environ["DATABASE_URL"]
 ```
 
-**Patrones a detectar en code review (regex):**
+**Patterns to detect in code review (regex):**
 ```
 (api[_-]?key|secret|password|token|pwd)\s*=\s*["'][^"']{8,}["']
 (sk-|pk_live_|Bearer\s+ey)[A-Za-z0-9+/]{20,}
 postgres://[^:]+:[^@]+@
 ```
 
-### PII — nunca loggear completo
+### PII — never log it in full
 
 ```python
-# ❌ PII completa en logs
+# ❌ Full PII in logs
 logger.info(f"User logged in: {user.email} from {request.ip}")
 logger.error(f"Payment failed for card {card_number}")
 
-# ✅ Solo lo necesario para trazabilidad
+# ✅ Only what's needed for traceability
 logger.info(f"User logged in: user_id={user.id}")
 logger.error(f"Payment failed: user_id={user.id} last4={card_number[-4:]}")
 ```
 
-### Masking de datos en responses
+### Masking data in responses
 
 ```python
-# ❌ Exponer datos innecesarios en API
+# ❌ Exposing unnecessary data in the API
 return UserResponse(
     id=user.id,
     email=user.email,
-    password_hash=user.password_hash,  # NUNCA
-    internal_score=user.risk_score,    # dato interno
+    password_hash=user.password_hash,  # NEVER
+    internal_score=user.risk_score,    # internal data
 )
 
-# ✅ Solo lo que el cliente necesita
+# ✅ Only what the client needs
 return UserResponse(
     id=user.id,
     email=user.email,
@@ -76,7 +81,7 @@ return UserResponse(
 )
 ```
 
-### Cifrado de datos sensibles en DB
+### Encrypting sensitive data in the DB
 
 ```python
 from cryptography.fernet import Fernet
@@ -91,21 +96,21 @@ class EncryptedField:
     def decrypt(self, value: str) -> str:
         return self._fernet.decrypt(value.encode()).decode()
 
-# DNI, número de tarjeta, datos médicos → siempre cifrados en DB
+# National ID, card number, medical data → always encrypted in the DB
 ```
 
 ---
 
-## Detección de secrets antes de commit
+## Detecting secrets before commit
 
-### Pre-commit hook (agregar al proyecto)
+### Pre-commit hook (add it to the project)
 
 ```bash
-# .git/hooks/pre-commit o via pre-commit framework
+# .git/hooks/pre-commit or via the pre-commit framework
 #!/bin/bash
-echo "🔍 Escaneando secrets..."
+echo "🔍 Scanning for secrets..."
 
-# Patrones que bloquean el commit
+# Patterns that block the commit
 patterns=(
   'api[_-]?key\s*=\s*["\x27][^"\x27]{8,}'
   'secret\s*=\s*["\x27][^"\x27]{8,}'
@@ -119,19 +124,19 @@ patterns=(
 
 for pattern in "${patterns[@]}"; do
   if git diff --cached | grep -qiE "$pattern"; then
-    echo "❌ SECRET DETECTADO: patrón '$pattern'"
-    echo "Remové el secret y usá variables de entorno."
+    echo "❌ SECRET DETECTED: pattern '$pattern'"
+    echo "Remove the secret and use environment variables."
     exit 1
   fi
 done
 
-echo "✅ Sin secrets detectados"
+echo "✅ No secrets detected"
 ```
 
-### Con gitleaks (recomendado para CI)
+### With gitleaks (recommended for CI)
 
 ```yaml
-# .github/workflows/ci.yml — agregar job
+# .github/workflows/ci.yml — add a job
 secret-scan:
   name: Secret Scan
   runs-on: ubuntu-latest
@@ -146,88 +151,88 @@ secret-scan:
 
 ---
 
-## Privacidad en APIs
+## Privacy in APIs
 
-### Data minimization — pedir solo lo necesario
+### Data minimization — ask only for what you need
 
 ```python
-# ❌ Recibir y guardar todo
+# ❌ Receive and store everything
 class RegistrationInput(BaseModel):
     name: str
     email: str
     phone: str
     birth_date: date
     address: str
-    # ... 20 campos más que no usamos
+    # ... 20 more fields we don't use
 
-# ✅ Solo lo necesario para el caso de uso
+# ✅ Only what the use case needs
 class RegistrationInput(BaseModel):
     name: str
     email: str
 ```
 
-### Retención de datos — política explícita
+### Data retention — an explicit policy
 
 ```python
-# Datos que se deben eliminar o anonimizar después de N días
+# Data that must be deleted or anonymized after N days
 class DataRetentionPolicy:
     AUDIT_LOGS_DAYS = 90
     SESSION_TOKENS_DAYS = 30
-    DELETED_USER_PII_DAYS = 7    # después de delete, anonimizar PII
+    DELETED_USER_PII_DAYS = 7    # after deletion, anonymize the PII
     ANALYTICS_RAW_DAYS = 365
 ```
 
-### Anonimización para logs y analytics
+### Anonymization for logs and analytics
 
 ```python
 import hashlib
 
 def anonymize_email(email: str) -> str:
-    # Identificable internamente pero no reversible externamente
+    # Identifiable internally but not reversible externally
     return hashlib.sha256(email.encode()).hexdigest()[:12]
 
 def mask_ip(ip: str) -> str:
-    # Conservar solo los primeros 3 octetos
+    # Keep only the first 3 octets
     parts = ip.split(".")
     return f"{'.'.join(parts[:3])}.0"
 ```
 
 ---
 
-## Checklist de privacidad por feature
+## Per-feature privacy checklist
 
-Antes de implementar cualquier feature que maneje datos de usuarios:
+Before implementing any feature that handles user data:
 
-- [ ] ¿Qué datos realmente necesito? ¿Puedo minimizarlos?
-- [ ] ¿Los datos sensibles están cifrados en reposo?
-- [ ] ¿Los datos viajan siempre por HTTPS?
-- [ ] ¿Los logs no contienen PII completo?
-- [ ] ¿Las respuestas de API no exponen campos innecesarios?
-- [ ] ¿Hay política de retención definida?
-- [ ] ¿Los usuarios pueden eliminar sus datos? (right to erasure)
-- [ ] ¿Hay auditoría de acceso a datos sensibles?
-- [ ] ¿Los secrets están en env vars / secrets manager?
-- [ ] ¿El código nuevo pasa el scan de secrets?
+- [ ] What data do I actually need? Can I minimize it?
+- [ ] Is the sensitive data encrypted at rest?
+- [ ] Does the data always travel over HTTPS?
+- [ ] Are the logs free of full PII?
+- [ ] Do the API responses avoid exposing unnecessary fields?
+- [ ] Is there a defined retention policy?
+- [ ] Can users delete their data? (right to erasure)
+- [ ] Is there an audit trail for access to sensitive data?
+- [ ] Are the secrets in env vars / a secrets manager?
+- [ ] Does the new code pass the secret scan?
 
 ---
 
-## Qué hacer si se detecta un secret commiteado
+## What to do if a committed secret is detected
 
 ```bash
-# 1. REVOCAR el secret INMEDIATAMENTE (antes de cualquier otra cosa)
-#    → Rotar API key, cambiar password, invalidar token
+# 1. REVOKE the secret IMMEDIATELY (before anything else)
+#    → Rotate the API key, change the password, invalidate the token
 
-# 2. Eliminar del historial de git
+# 2. Remove it from the git history
 git filter-branch --force --index-filter \
   "git rm --cached --ignore-unmatch path/to/file" \
   --prune-empty --tag-name-filter cat -- --all
 
-# O con BFG (más rápido)
+# Or with BFG (faster)
 bfg --delete-files file-with-secret.env
 git push --force
 
-# 3. Notificar al equipo
-# 4. Auditar si el secret fue usado por terceros
+# 3. Notify the team
+# 4. Audit whether the secret was used by third parties
 ```
 
-**Nunca asumir que un secret commiteado no fue visto**, aunque el repo sea privado.
+**Never assume a committed secret went unseen**, even if the repo is private.

@@ -1,47 +1,52 @@
+---
+name: lang-python
+description: Python 3.12+ standards - uv for dependencies, mandatory type hints, hexagonal layer structure with ABC ports and use cases, pytest naming, ruff/mypy, and Pydantic vs dataclass guidance. Use when writing or reviewing Python code, .py files, pyproject.toml, FastAPI routes, or pytest suites.
+---
+
 # Skill: Python
 
-## Setup de proyecto
+## Project setup
 
 ```bash
-uv init <nombre>
-uv add <dep>          # nunca pip directo
+uv init <name>
+uv add <dep>          # never pip directly
 uv add --dev pytest ruff mypy
 ```
 
-## Convenciones obligatorias
+## Mandatory conventions
 
 - Python 3.12+
-- `from __future__ import annotations` en cada archivo
-- Type hints en todo: params, returns, variables de clase
-- `X | None` en lugar de `Optional[X]`
-- `X | Y` en lugar de `Union[X, Y]`
+- `from __future__ import annotations` in every file
+- Type hints everywhere: params, returns, class variables
+- `X | None` instead of `Optional[X]`
+- `X | Y` instead of `Union[X, Y]`
 
-## Estructura de capas
+## Layer structure
 
 ```
 src/
   domain/
-    entities/        # dataclasses puras, sin deps externas
-    ports/           # ABC con contratos (interfaces)
-    value_objects/   # tipos inmutables con validación
+    entities/        # pure dataclasses, no external deps
+    ports/           # ABCs with contracts (interfaces)
+    value_objects/   # immutable types with validation
   application/
-    use_cases/       # orquestan dominio
-    services/        # servicios reutilizables
+    use_cases/       # orchestrate the domain
+    services/        # reusable services
   infrastructure/
-    adapters/        # implementaciones concretas de ports
+    adapters/        # concrete port implementations
     db/              # SQLAlchemy, repos
-    http/            # clientes externos
+    http/            # external clients
   api/
     routes/          # FastAPI routers
-    schemas/         # Pydantic I/O (distintos del dominio)
+    schemas/         # Pydantic I/O (separate from the domain)
 tests/
   unit/
   integration/
 ```
 
-## Patrones clave
+## Key patterns
 
-### Port (interfaz de dominio)
+### Port (domain interface)
 ```python
 from abc import ABC, abstractmethod
 from domain.entities.user import User, UserId
@@ -54,7 +59,7 @@ class UserRepository(ABC):
     async def save(self, user: User) -> None: ...
 ```
 
-### Entidad de dominio
+### Domain entity
 ```python
 from __future__ import annotations
 from dataclasses import dataclass, field
@@ -91,9 +96,9 @@ class CreateUserUseCase:
         return user.id
 ```
 
-### DI manual (sin framework)
+### Manual DI (no framework)
 ```python
-# main.py o app factory
+# main.py or app factory
 repo = PostgresUserRepository(session)
 use_case = CreateUserUseCase(repo)
 ```
@@ -101,12 +106,12 @@ use_case = CreateUserUseCase(repo)
 ## Testing
 
 ```bash
-pytest tests/           # todos
-pytest tests/unit/      # solo unitarios
+pytest tests/           # everything
+pytest tests/unit/      # unit tests only
 pytest -v -k "test_create_user"
 ```
 
-Naming: `test_<qué>_when_<condición>_then_<resultado>`
+Naming: `test_<what>_when_<condition>_then_<result>`
 
 ```python
 def test_create_user_when_email_exists_then_raises_duplicate():
@@ -116,31 +121,31 @@ def test_create_user_when_email_exists_then_raises_duplicate():
         await use_case.execute("Juan", "a@b.com")
 ```
 
-- Unit: mockear ports con fakes/stubs, testear use cases
-- Integration: adapters contra infra real (Docker / testcontainers)
+- Unit: mock ports with fakes/stubs, test use cases
+- Integration: adapters against real infra (Docker / testcontainers)
 
-## Linting y tipos
+## Linting and types
 
 ```bash
 ruff check src/         # linting
-ruff format src/        # formato
-mypy src/               # tipos
+ruff format src/        # formatting
+mypy src/               # types
 ```
 
-## Cuándo usar Pydantic vs dataclass
+## When to use Pydantic vs dataclass
 
-| Caso | Usar |
+| Case | Use |
 |------|------|
-| Entidad de dominio pura | `@dataclass` |
-| Value object con validación | `pydantic.BaseModel` (frozen) |
-| Schema de API (I/O) | `pydantic.BaseModel` |
-| Config de la app | `pydantic-settings` |
+| Pure domain entity | `@dataclass` |
+| Value object with validation | `pydantic.BaseModel` (frozen) |
+| API schema (I/O) | `pydantic.BaseModel` |
+| App config | `pydantic-settings` |
 
-## Decisiones de arquitectura comunes en Python
+## Common architecture decisions in Python
 
-Ante estas elecciones, aplicar el protocolo de decisión del CLAUDE.md:
+For these choices, apply the decision protocol from CLAUDE.md:
 - **ORM:** SQLAlchemy vs SQLModel vs raw queries
 - **HTTP:** FastAPI vs Flask vs aiohttp
-- **Async:** asyncio nativo vs sync bloqueante
-- **Tests:** pytest-mock vs fakes manuales
-- **Validación:** Pydantic v2 vs attrs vs plain dataclasses
+- **Async:** native asyncio vs blocking sync
+- **Tests:** pytest-mock vs hand-written fakes
+- **Validation:** Pydantic v2 vs attrs vs plain dataclasses

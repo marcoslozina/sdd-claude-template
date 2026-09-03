@@ -1,19 +1,24 @@
+---
+name: role-security
+description: Security by design applied to code - OWASP Top 10 patterns, access control, JWT/RBAC, crypto and password hashing, input validation, secrets handling, HTTP security headers, and threat modeling. Use when writing auth, handling user input, managing secrets or env vars, reviewing a PR for vulnerabilities, or threat-modeling a feature.
+---
+
 # Skill: Security
 
-## Principio base
-Security by design. No es un layer que se agrega al final — es una dimensión de cada decisión de arquitectura.
+## Base principle
+Security by design. It is not a layer added at the end — it is a dimension of every architectural decision.
 
 ---
 
-## OWASP Top 10 — aplicado al código
+## OWASP Top 10 — applied to code
 
 ### A01 — Broken Access Control
 ```python
-# ❌ Confiar en el cliente
+# ❌ Trusting the client
 def get_order(order_id: str, user_id: str = request.query["user_id"]):
-    return db.find_order(order_id)  # cualquiera puede ver cualquier orden
+    return db.find_order(order_id)  # anyone can see any order
 
-# ✅ Verificar en el servidor
+# ✅ Verify on the server
 def get_order(order_id: str, current_user: User = Depends(get_current_user)):
     order = db.find_order(order_id)
     if order.user_id != current_user.id:
@@ -23,10 +28,10 @@ def get_order(order_id: str, current_user: User = Depends(get_current_user)):
 
 ### A02 — Cryptographic Failures
 ```python
-# ❌ Datos sensibles en texto plano o hash débil
+# ❌ Sensitive data in plain text or with a weak hash
 password_hash = md5(password)
 
-# ✅ Hash seguro con salt
+# ✅ Secure hash with salt
 import bcrypt
 password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12))
 ```
@@ -36,50 +41,50 @@ password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12))
 # ❌ SQL injection
 query = f"SELECT * FROM users WHERE name = '{user_input}'"
 
-# ✅ Parametrizado
+# ✅ Parameterized
 query = "SELECT * FROM users WHERE name = :name"
 db.execute(query, {"name": user_input})
 ```
 
 ### A07 — Auth failures
-- Tokens JWT: validar firma + expiración + audience
-- Sesiones: regenerar ID después de login
-- Passwords: mínimo 12 chars, sin restricciones absurdas de caracteres especiales
-- MFA en cuentas con privilegios elevados
+- JWT tokens: validate signature + expiration + audience
+- Sessions: regenerate the ID after login
+- Passwords: minimum 12 chars, no absurd special-character restrictions
+- MFA on accounts with elevated privileges
 
 ### A09 — Logging failures
 ```python
-# ❌ Loggear datos sensibles
+# ❌ Logging sensitive data
 logger.info(f"Login: user={email} password={password}")
 
-# ✅ Solo lo necesario
+# ✅ Only what's needed
 logger.info(f"Login attempt: user_id={user_id} success={success}")
 ```
 
 ---
 
-## Secrets — reglas no negociables
+## Secrets — non-negotiable rules
 
 ```bash
-# ❌ Nunca en código
+# ❌ Never in code
 API_KEY = "<secret-key-here>"
 DATABASE_URL = "postgres://<user>:<pass>@<host>/<db>"
 
-# ✅ Siempre en env vars
+# ✅ Always in env vars
 import os
-API_KEY = os.environ["API_KEY"]  # falla en startup si no está → intencional
+API_KEY = os.environ["API_KEY"]  # fails at startup if missing → intentional
 ```
 
-- `.env` en `.gitignore` siempre
-- Secrets rotan periódicamente (< 90 días en producción)
-- Principio de menor privilegio: cada servicio tiene solo los secrets que necesita
-- Usar AWS Secrets Manager / Vault para producción, no env vars del OS
+- `.env` in `.gitignore`, always
+- Secrets rotate periodically (< 90 days in production)
+- Principle of least privilege: each service only holds the secrets it needs
+- Use AWS Secrets Manager / Vault in production, not OS env vars
 
 ---
 
-## Autenticación y Autorización
+## Authentication and Authorization
 
-### JWT — validación correcta
+### JWT — correct validation
 ```python
 import jwt
 
@@ -88,18 +93,18 @@ def validate_token(token: str) -> dict:
         payload = jwt.decode(
             token,
             SECRET_KEY,
-            algorithms=["HS256"],       # especificar algoritmo explícito
-            audience="my-api",          # validar audience
-            options={"verify_exp": True} # verificar expiración
+            algorithms=["HS256"],       # specify the algorithm explicitly
+            audience="my-api",          # validate audience
+            options={"verify_exp": True} # verify expiration
         )
         return payload
     except jwt.ExpiredSignatureError:
-        raise UnauthorizedError("Token expirado")
+        raise UnauthorizedError("Expired token")
     except jwt.InvalidTokenError:
-        raise UnauthorizedError("Token inválido")
+        raise UnauthorizedError("Invalid token")
 ```
 
-### RBAC básico
+### Basic RBAC
 ```python
 from enum import Enum
 
@@ -112,7 +117,7 @@ def require_permission(permission: Permission):
     def decorator(func):
         def wrapper(current_user: User, *args, **kwargs):
             if permission not in current_user.permissions:
-                raise ForbiddenError(f"Requiere permiso: {permission.value}")
+                raise ForbiddenError(f"Requires permission: {permission.value}")
             return func(current_user, *args, **kwargs)
         return wrapper
     return decorator
@@ -120,10 +125,10 @@ def require_permission(permission: Permission):
 
 ---
 
-## Input validation — en el borde
+## Input validation — at the edge
 
 ```python
-# Toda validación en entry point, antes de llegar al dominio
+# All validation at the entry point, before reaching the domain
 from pydantic import BaseModel, validator, constr
 
 class CreateUserInput(BaseModel):
@@ -134,22 +139,22 @@ class CreateUserInput(BaseModel):
     @validator("email")
     def validate_email(cls, v):
         if "@" not in v or "." not in v.split("@")[-1]:
-            raise ValueError("Email inválido")
+            raise ValueError("Invalid email")
         return v.lower().strip()
 
     @validator("age")
     def validate_age(cls, v):
         if not 0 < v < 150:
-            raise ValueError("Edad inválida")
+            raise ValueError("Invalid age")
         return v
 ```
 
 ---
 
-## Headers de seguridad HTTP
+## HTTP security headers
 
 ```python
-# Para cualquier API/web — configurar en el entry point
+# For any API/web — configure at the entry point
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
@@ -162,24 +167,24 @@ SECURITY_HEADERS = {
 
 ---
 
-## Threat Modeling — preguntas a hacer por feature
+## Threat Modeling — questions to ask per feature
 
-Ante cada feature nueva que tenga datos o acceso:
+For every new feature that involves data or access:
 
-1. **¿Quién puede acceder a esto?** → definir autenticación + autorización
-2. **¿Qué pasa si el input es malicioso?** → validar + sanitizar
-3. **¿Qué datos sensibles maneja?** → cifrado + logging seguro
-4. **¿Qué puede salir mal en infra?** → timeouts, circuit breakers, fallbacks
-5. **¿Cómo auditamos accesos?** → logs de acceso a datos sensibles
+1. **Who can access this?** → define authentication + authorization
+2. **What if the input is malicious?** → validate + sanitize
+3. **What sensitive data does it handle?** → encryption + safe logging
+4. **What can go wrong in infra?** → timeouts, circuit breakers, fallbacks
+5. **How do we audit access?** → access logs for sensitive data
 
 ---
 
-## Checklist de seguridad por PR
+## Per-PR security checklist
 
-- [ ] Sin secrets en código o logs
-- [ ] Input validado antes de usarse
-- [ ] Autorización verificada en el servidor
-- [ ] Queries parametrizadas (sin concatenación)
-- [ ] Datos sensibles cifrados en reposo
-- [ ] Dependencias sin vulnerabilidades críticas conocidas
-- [ ] Errores no exponen detalles de implementación al cliente
+- [ ] No secrets in code or logs
+- [ ] Input validated before use
+- [ ] Authorization verified on the server
+- [ ] Parameterized queries (no concatenation)
+- [ ] Sensitive data encrypted at rest
+- [ ] Dependencies free of known critical vulnerabilities
+- [ ] Errors do not expose implementation details to the client

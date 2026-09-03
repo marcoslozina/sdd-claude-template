@@ -1,14 +1,19 @@
+---
+name: role-cicd
+description: CI/CD pipeline design and delivery practices — GitHub Actions job structure and fail-fast ordering, Blue/Green vs Canary vs Rolling deploys, secrets handling, Docker multi-stage build hygiene, merge checklists and pipeline alerting. Use when writing or reviewing workflow YAML, Dockerfiles, deploy strategies, rollback plans, or release gating.
+---
+
 # Skill: CI/CD
 
-## Principios
-- El pipeline es código. Se versiona, se revisa, se testea.
-- Fail fast: los checks más rápidos primero.
-- Ningún deploy a producción sin pasar por staging.
-- Todo deploy debe ser reversible (rollback < 5 min).
+## Principles
+- The pipeline is code. It's versioned, reviewed, and tested.
+- Fail fast: the quickest checks run first.
+- No deploy to production without going through staging.
+- Every deploy must be reversible (rollback < 5 min).
 
 ---
 
-## Estructura de pipeline (GitHub Actions)
+## Pipeline structure (GitHub Actions)
 
 ```yaml
 # .github/workflows/ci.yml
@@ -21,7 +26,7 @@ on:
     branches: [main]
 
 jobs:
-  # 1. Checks rápidos primero (< 2 min)
+  # 1. Fast checks first (< 2 min)
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -29,7 +34,7 @@ jobs:
       - name: Lint
         run: make lint
 
-  # 2. Tests unitarios (< 5 min)
+  # 2. Unit tests (< 5 min)
   unit-tests:
     runs-on: ubuntu-latest
     needs: lint
@@ -38,7 +43,7 @@ jobs:
       - name: Unit tests
         run: make test-unit
 
-  # 3. Tests de integración (con servicios)
+  # 3. Integration tests (with services)
   integration-tests:
     runs-on: ubuntu-latest
     needs: unit-tests
@@ -52,7 +57,7 @@ jobs:
       - name: Integration tests
         run: make test-integration
 
-  # 4. Build y push de imagen
+  # 4. Build and push the image
   build:
     runs-on: ubuntu-latest
     needs: integration-tests
@@ -67,63 +72,63 @@ jobs:
 
 ---
 
-## Estrategias de deploy
+## Deploy strategies
 
 ### Blue/Green
 ```
-Traffic → Load Balancer → Blue (activo)
-                       → Green (nuevo, sin traffic)
+Traffic → Load Balancer → Blue (active)
+                       → Green (new, no traffic)
 
-1. Deploy en Green
-2. Run smoke tests en Green
+1. Deploy to Green
+2. Run smoke tests on Green
 3. Shift traffic Blue → Green
-4. Mantener Blue como rollback
+4. Keep Blue around as rollback
 ```
-**Cuándo:** apps stateless, rollback crítico, zero-downtime obligatorio.
+**When:** stateless apps, rollback is critical, zero-downtime is mandatory.
 
 ### Canary
 ```
 Traffic → 95% → Stable
-        →  5% → Canary (nuevo)
+        →  5% → Canary (new)
 
-Monitorear métricas → si OK → aumentar % → 100%
-                   → si KO → 0% canary → rollback
+Monitor metrics → if OK → increase % → 100%
+                → if KO → 0% canary → rollback
 ```
-**Cuándo:** quieras validar en producción con riesgo controlado.
+**When:** you want to validate in production with controlled risk.
 
 ### Rolling
 ```
-Pod 1 → actualizar → healthy
-Pod 2 → actualizar → healthy
-Pod 3 → actualizar → healthy
+Pod 1 → update → healthy
+Pod 2 → update → healthy
+Pod 3 → update → healthy
 ```
-**Cuándo:** Kubernetes, updates graduales, no necesitás zero-downtime total.
+**When:** Kubernetes, gradual updates, you don't need full zero-downtime.
 
 ---
 
-## Secrets — reglas
+## Secrets — rules
 
 ```yaml
-# ✅ Usar GitHub Secrets
+# ✅ Use GitHub Secrets
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   API_KEY: ${{ secrets.API_KEY }}
 
-# ❌ NUNCA
+# ❌ NEVER
 env:
   DATABASE_URL: "postgres://user:password@host/db"
 ```
 
-- Secrets rotan periódicamente
-- Principio de menor privilegio: cada job usa solo los secrets que necesita
-- Nunca loggear secrets (`echo $SECRET` → error de pipeline)
+- Secrets are rotated periodically
+- Least privilege: each job uses only the secrets it needs
+- Never log secrets (`echo $SECRET` → pipeline error)
 
 ---
 
-## Docker — buenas prácticas
+## Docker — best practices
 
 ```dockerfile
-# Multi-stage build para imagen mínima
+# Multi-stage build for a minimal image
 FROM python:3.12-slim AS builder
 WORKDIR /app
 COPY pyproject.toml .
@@ -137,26 +142,26 @@ USER nonroot
 CMD [".venv/bin/python", "-m", "app"]
 ```
 
-- Imagen final sin herramientas de build
-- Usuario no root
-- `.dockerignore` para excluir `.git`, `tests/`, `docs/`
-- Tag con SHA del commit, no `latest` en producción
+- Final image without build tools
+- Non-root user
+- `.dockerignore` to exclude `.git`, `tests/`, `docs/`
+- Tag with the commit SHA, not `latest` in production
 
 ---
 
-## Checklist antes de mergeear a main
+## Checklist before merging to main
 
-- [ ] Lint pasa
-- [ ] Tests unitarios pasan
-- [ ] Tests de integración pasan
-- [ ] Cobertura no bajó
-- [ ] Security scan (Dependabot / Trivy) sin críticos
-- [ ] Code review aprobado
-- [ ] Changelog / release notes actualizados
+- [ ] Lint passes
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Coverage did not drop
+- [ ] Security scan (Dependabot / Trivy) with no criticals
+- [ ] Code review approved
+- [ ] Changelog / release notes updated
 
 ---
 
-## Observabilidad mínima en pipeline
+## Minimum pipeline observability
 
 ```yaml
 - name: Notify on failure
@@ -165,15 +170,15 @@ CMD [".venv/bin/python", "-m", "app"]
   with:
     payload: |
       {
-        "text": "❌ Pipeline falló en ${{ github.ref }} — ${{ github.run_url }}"
+        "text": "❌ Pipeline failed on ${{ github.ref }} — ${{ github.run_url }}"
       }
 ```
 
 ---
 
-## Decisiones de arquitectura comunes en CI/CD
+## Common architecture decisions in CI/CD
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+Apply the decision protocol from CLAUDE.md when facing:
 - **CI platform:** GitHub Actions vs GitLab CI vs CircleCI vs Jenkins
 - **Deploy strategy:** Blue/Green vs Canary vs Rolling
 - **Container registry:** ECR vs GCR vs Docker Hub vs GitHub Packages

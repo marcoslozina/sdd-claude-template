@@ -1,20 +1,25 @@
-# Skill: Observabilidad
+---
+name: role-observability
+description: Logs, metrics, and traces for production services: structured JSON logging, required log fields and levels, OpenTelemetry counters/histograms/spans, trace propagation, alert rules, and Kubernetes health checks. Use when instrumenting a service, debugging production, or setting up dashboards and alerting.
+---
 
-## Los tres pilares
+# Skill: Observability
+
+## The three pillars
 
 ```
-Logs    → QUÉ pasó (eventos discretos)
-Metrics → CUÁNTO / QUÉ TAN SEGUIDO (series de tiempo)
-Traces  → POR DÓNDE pasó (flujo distribuido)
+Logs    → WHAT happened (discrete events)
+Metrics → HOW MUCH / HOW OFTEN (time series)
+Traces  → WHERE it went (distributed flow)
 ```
 
-Sin los tres, estás volando a ciegas en producción.
+Without all three, you're flying blind in production.
 
 ---
 
-## Logging estructurado
+## Structured logging
 
-Nunca logs de texto libre. Siempre JSON estructurado.
+Never free-text logs. Always structured JSON.
 
 ```python
 import structlog
@@ -31,42 +36,42 @@ structlog.configure(
 
 log = structlog.get_logger()
 
-# ✅ Estructurado — buscable, filtrable
+# ✅ Structured — searchable, filterable
 log.info("user.login", user_id=user.id, ip=mask_ip(request.ip), success=True)
 log.error("payment.failed", user_id=user.id, error_code="INSUFFICIENT_FUNDS", amount_cents=1000)
 
-# ❌ Texto libre — imposible de analizar en volumen
+# ❌ Free text — impossible to analyze at volume
 logging.info(f"User {user.email} logged in from {request.ip}")
 ```
 
-### Campos obligatorios en cada log
+### Mandatory fields in every log
 
 ```python
 {
     "timestamp": "2026-04-20T14:32:00Z",  # ISO 8601
     "level": "info",
-    "service": "user-service",             # nombre del servicio
-    "version": "1.4.2",                    # versión deployada
-    "request_id": "uuid",                  # trazabilidad por request
-    "user_id": "abc",                      # contexto de negocio (si aplica)
-    "event": "user.login",                 # qué pasó (dominio.acción)
-    "duration_ms": 45                      # latencia cuando aplica
+    "service": "user-service",             # service name
+    "version": "1.4.2",                    # deployed version
+    "request_id": "uuid",                  # per-request traceability
+    "user_id": "abc",                      # business context (when applicable)
+    "event": "user.login",                 # what happened (domain.action)
+    "duration_ms": 45                      # latency when applicable
 }
 ```
 
-### Niveles — cuándo usar cada uno
+### Levels — when to use each one
 
-| Nivel | Cuándo | Ejemplo |
+| Level | When | Example |
 |-------|--------|---------|
-| `debug` | Solo en dev, nunca en prod | Estado interno, variables intermedias |
-| `info` | Eventos de negocio normales | Login, pago procesado, orden creada |
-| `warn` | Algo raro pero no crítico | Retry intento 2/3, config fallback |
-| `error` | Fallo que requiere atención | Exception, timeout, dato inválido |
-| `critical` | Sistema comprometido | DB caída, secret rotado, servicio down |
+| `debug` | Dev only, never in prod | Internal state, intermediate variables |
+| `info` | Normal business events | Login, payment processed, order created |
+| `warn` | Something odd but not critical | Retry attempt 2/3, config fallback |
+| `error` | Failure requiring attention | Exception, timeout, invalid data |
+| `critical` | System compromised | DB down, secret rotated, service down |
 
 ---
 
-## Métricas con OpenTelemetry
+## Metrics with OpenTelemetry
 
 ```python
 from opentelemetry import metrics
@@ -77,25 +82,25 @@ provider = MeterProvider()
 metrics.set_meter_provider(provider)
 meter = metrics.get_meter("user-service")
 
-# Contadores
+# Counters
 requests_total = meter.create_counter(
     "http_requests_total",
     description="Total HTTP requests",
 )
 
-# Histogramas (latencia)
+# Histograms (latency)
 request_duration = meter.create_histogram(
     "http_request_duration_ms",
     description="HTTP request duration in milliseconds",
 )
 
-# Gauges (estado actual)
+# Gauges (current state)
 active_connections = meter.create_up_down_counter(
     "db_connections_active",
     description="Active database connections",
 )
 
-# Uso
+# Usage
 def handle_request(method: str, path: str):
     start = time.time()
     try:
@@ -110,21 +115,21 @@ def handle_request(method: str, path: str):
         request_duration.record(duration, {"method": method, "path": path})
 ```
 
-### Métricas mínimas por servicio
+### Minimum metrics per service
 
 ```
-http_requests_total{method, path, status}       # volumen y error rate
-http_request_duration_ms{method, path}          # latencia (p50, p95, p99)
-db_query_duration_ms{query_type}                # latencia de DB
-db_connections_active                           # pool de conexiones
-cache_hits_total / cache_misses_total           # hit rate de cache
-queue_depth{queue_name}                         # profundidad de cola
-business_events_total{event_type}              # métricas de negocio
+http_requests_total{method, path, status}       # volume and error rate
+http_request_duration_ms{method, path}          # latency (p50, p95, p99)
+db_query_duration_ms{query_type}                # DB latency
+db_connections_active                           # connection pool
+cache_hits_total / cache_misses_total           # cache hit rate
+queue_depth{queue_name}                         # queue depth
+business_events_total{event_type}              # business metrics
 ```
 
 ---
 
-## Tracing distribuido con OpenTelemetry
+## Distributed tracing with OpenTelemetry
 
 ```python
 from opentelemetry import trace
@@ -135,7 +140,7 @@ provider = TracerProvider()
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer("user-service")
 
-# Cada operación significativa = un span
+# Every significant operation = one span
 def create_user(name: str, email: str) -> UserId:
     with tracer.start_as_current_span("create_user") as span:
         span.set_attribute("user.email_domain", email.split("@")[1])
@@ -150,53 +155,53 @@ def create_user(name: str, email: str) -> UserId:
         return user_id
 ```
 
-**Propagación de trace entre servicios:**
+**Trace propagation between services:**
 ```python
-# Inyectar en headers HTTP salientes
+# Inject into outgoing HTTP headers
 from opentelemetry.propagate import inject
 headers = {}
 inject(headers)
 requests.post(url, headers=headers)
 
-# Extraer en headers HTTP entrantes (middleware)
+# Extract from incoming HTTP headers (middleware)
 from opentelemetry.propagate import extract
 context = extract(request.headers)
 ```
 
 ---
 
-## Stack recomendado
+## Recommended stack
 
-| Herramienta | Qué hace | Cuándo usar |
+| Tool | What it does | When to use |
 |-------------|----------|-------------|
-| OpenTelemetry | Instrumentación estándar | Siempre — es el estándar |
-| Prometheus | Scraping de métricas | Self-hosted / Kubernetes |
+| OpenTelemetry | Standard instrumentation | Always — it's the standard |
+| Prometheus | Metrics scraping | Self-hosted / Kubernetes |
 | Grafana | Dashboards | Self-hosted |
-| Datadog | APM + logs + métricas | Managed, enterprise |
-| AWS CloudWatch | Logs + métricas en AWS | Si ya usás AWS |
+| Datadog | APM + logs + metrics | Managed, enterprise |
+| AWS CloudWatch | Logs + metrics on AWS | If you're already on AWS |
 | Jaeger / Tempo | Tracing | Self-hosted |
 
 ---
 
-## Alertas — qué monitorear siempre
+## Alerts — what to always monitor
 
 ```yaml
-# Reglas mínimas de alerta
+# Minimum alerting rules
 - name: HighErrorRate
   condition: rate(http_requests_total{status="5xx"}[5m]) > 0.05
-  message: "Error rate > 5% en los últimos 5 minutos"
+  message: "Error rate > 5% over the last 5 minutes"
 
 - name: HighLatency
   condition: histogram_quantile(0.99, http_request_duration_ms) > 2000
-  message: "p99 latencia > 2s"
+  message: "p99 latency > 2s"
 
 - name: DBConnectionPoolExhausted
   condition: db_connections_active / db_connections_max > 0.9
-  message: "Pool de conexiones al 90%"
+  message: "Connection pool at 90%"
 
 - name: QueueDepthHigh
   condition: queue_depth > 10000
-  message: "Cola acumulando — posible consumer caído"
+  message: "Queue backing up — consumer may be down"
 ```
 
 ---
@@ -212,11 +217,11 @@ class HealthStatus(str, Enum):
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
 
-@app.get("/health/live")   # ¿El proceso está vivo? (Kubernetes liveness)
+@app.get("/health/live")   # Is the process alive? (Kubernetes liveness)
 async def liveness():
     return {"status": HealthStatus.HEALTHY}
 
-@app.get("/health/ready")  # ¿Puede recibir tráfico? (Kubernetes readiness)
+@app.get("/health/ready")  # Can it take traffic? (Kubernetes readiness)
 async def readiness():
     checks = {
         "database": await check_db(),
@@ -228,10 +233,10 @@ async def readiness():
 
 ---
 
-## Decisiones comunes en Observabilidad
+## Common Observability decisions
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+Apply the decision protocol from CLAUDE.md when facing:
 - **Stack:** OpenTelemetry + Grafana/Prometheus vs Datadog vs CloudWatch
 - **Log aggregation:** ELK (Elasticsearch) vs Loki vs CloudWatch Logs
 - **Alerting:** PagerDuty vs OpsGenie vs AlertManager
-- **Sampling de traces:** 100% vs probabilístico vs tail-based
+- **Trace sampling:** 100% vs probabilistic vs tail-based

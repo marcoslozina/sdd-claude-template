@@ -1,179 +1,184 @@
+---
+name: role-accessibility
+description: Web accessibility standards targeting WCAG 2.2 AA - POUR principles, semantic HTML and landmarks, contrast ratios, focus and keyboard support, ARIA attributes, accessible forms, images and media, reduced motion, plus automated and manual testing. Use when building or reviewing UI, HTML/CSS/JSX markup, forms, modals, or running an a11y audit.
+---
+
 # Skill: Accessibility (a11y)
 
-## Principio base
+## Core principle
 
-Accesibilidad no es una feature opcional ni un checklist final. Es una propiedad del diseño que, si se ignora, excluye usuarios — y en muchos contextos es un requisito legal (ADA, WCAG 2.2, EN 301 549).
+Accessibility is not an optional feature or a final checklist. It's a property of the design that, when ignored, excludes users — and in many contexts it's a legal requirement (ADA, WCAG 2.2, EN 301 549).
 
-**Nivel mínimo aceptable: WCAG 2.2 nivel AA.**
+**Minimum acceptable level: WCAG 2.2 level AA.**
 
 ---
 
-## Los 4 principios (POUR)
+## The 4 principles (POUR)
 
-| Principio | Qué significa |
+| Principle | What it means |
 |-----------|--------------|
-| **Perceptible** | La información llega a los sentidos disponibles del usuario |
-| **Operable** | El usuario puede navegar e interactuar con lo que tiene |
-| **Comprensible** | El contenido y la UI son predecibles y entendibles |
-| **Robusto** | Funciona con tecnología asistiva actual y futura |
+| **Perceivable** | Information reaches the senses the user has available |
+| **Operable** | The user can navigate and interact with what they have |
+| **Understandable** | The content and the UI are predictable and comprehensible |
+| **Robust** | It works with current and future assistive technology |
 
 ---
 
-## Estructura semántica — lo más importante
+## Semantic structure — the most important part
 
 ```html
-<!-- ❌ Div soup: sin semántica -->
+<!-- ❌ Div soup: no semantics -->
 <div class="header">
   <div class="nav">
-    <div onclick="go()">Inicio</div>
+    <div onclick="go()">Home</div>
   </div>
 </div>
 
-<!-- ✅ HTML semántico -->
+<!-- ✅ Semantic HTML -->
 <header>
-  <nav aria-label="Navegación principal">
-    <a href="/">Inicio</a>
+  <nav aria-label="Main navigation">
+    <a href="/">Home</a>
   </nav>
 </header>
 ```
 
-### Orden de encabezados
+### Heading order
 ```html
-<!-- ✅ Jerarquía correcta — no saltar niveles -->
-<h1>Título de página</h1>
-  <h2>Sección</h2>
-    <h3>Subsección</h3>
+<!-- ✅ Correct hierarchy — don't skip levels -->
+<h1>Page title</h1>
+  <h2>Section</h2>
+    <h3>Subsection</h3>
 ```
 
-### Landmarks obligatorios
+### Mandatory landmarks
 ```html
-<header>     <!-- encabezado de sitio -->
-<nav>        <!-- navegación (aria-label si hay varias) -->
-<main>       <!-- contenido principal — solo uno por página -->
-<aside>      <!-- contenido complementario -->
-<footer>     <!-- pie de sitio -->
+<header>     <!-- site header -->
+<nav>        <!-- navigation (aria-label when there are several) -->
+<main>       <!-- main content — only one per page -->
+<aside>      <!-- complementary content -->
+<footer>     <!-- site footer -->
 ```
 
 ---
 
-## Contraste — WCAG 2.2
+## Contrast — WCAG 2.2
 
-| Tipo de texto | Ratio mínimo AA | Ratio AAA |
+| Text type | Minimum AA ratio | AAA ratio |
 |---------------|----------------|-----------|
-| Texto normal (<18px / <14px bold) | 4.5:1 | 7:1 |
-| Texto grande (≥18px / ≥14px bold) | 3:1 | 4.5:1 |
-| Componentes UI e íconos | 3:1 | — |
+| Normal text (<18px / <14px bold) | 4.5:1 | 7:1 |
+| Large text (≥18px / ≥14px bold) | 3:1 | 4.5:1 |
+| UI components and icons | 3:1 | — |
 
-Herramientas: [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/), Figma Able plugin.
+Tools: [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/), Figma Able plugin.
 
 ---
 
-## Foco y teclado
+## Focus and keyboard
 
 ```css
-/* ✅ Nunca eliminar el outline sin reemplazarlo */
+/* ✅ Never remove the outline without replacing it */
 :focus-visible {
   outline: 2px solid var(--color-action-primary);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
-/* ❌ Esto es un error de a11y */
+/* ❌ This is an a11y bug */
 :focus { outline: none; }
 ```
 
-### Orden de tabulación
-- El orden de `Tab` debe seguir el orden visual
-- Los modales deben atrapar el foco (focus trap) mientras están abiertos
-- Al cerrar un modal, el foco vuelve al elemento que lo abrió
+### Tab order
+- The `Tab` order must follow the visual order
+- Modals must trap focus (focus trap) while they're open
+- When a modal closes, focus returns to the element that opened it
 
-### Teclas obligatorias
-| Componente | Teclas requeridas |
+### Required keys
+| Component | Required keys |
 |-----------|------------------|
-| Botón | Enter, Space |
+| Button | Enter, Space |
 | Link | Enter |
 | Checkbox | Space |
-| Select/Listbox | ↑↓ para navegar, Enter para seleccionar |
-| Modal | Esc para cerrar |
-| Accordion | Enter/Space para expandir |
+| Select/Listbox | ↑↓ to navigate, Enter to select |
+| Modal | Esc to close |
+| Accordion | Enter/Space to expand |
 
 ---
 
-## ARIA — usar solo cuando el HTML nativo no alcanza
+## ARIA — use it only when native HTML isn't enough
 
 ```html
-<!-- ✅ Primero, HTML nativo -->
-<button>Guardar</button>
+<!-- ✅ Native HTML first -->
+<button>Save</button>
 
-<!-- ✅ ARIA cuando el elemento no es semánticamente correcto -->
+<!-- ✅ ARIA when the element isn't semantically correct -->
 <div role="button" tabindex="0" aria-pressed="false">
-  Guardar
+  Save
 </div>
 
-<!-- Atributos más usados -->
-aria-label="descripción cuando no hay texto visible"
-aria-labelledby="id-del-elemento-que-da-nombre"
-aria-describedby="id-del-elemento-con-instrucciones"
-aria-expanded="true|false"     <!-- acordeones, dropdowns -->
-aria-haspopup="true"           <!-- botones que abren menús -->
-aria-live="polite|assertive"   <!-- regiones con contenido dinámico -->
-aria-hidden="true"             <!-- ocultar de lectores de pantalla -->
-aria-disabled="true"           <!-- deshabilitado (no usar solo disabled) -->
-aria-invalid="true"            <!-- campo con error -->
-aria-required="true"           <!-- campo obligatorio -->
+<!-- Most-used attributes -->
+aria-label="description when there is no visible text"
+aria-labelledby="id-of-the-element-that-provides-the-name"
+aria-describedby="id-of-the-element-with-instructions"
+aria-expanded="true|false"     <!-- accordions, dropdowns -->
+aria-haspopup="true"           <!-- buttons that open menus -->
+aria-live="polite|assertive"   <!-- regions with dynamic content -->
+aria-hidden="true"             <!-- hide from screen readers -->
+aria-disabled="true"           <!-- disabled (don't use disabled alone) -->
+aria-invalid="true"            <!-- field with an error -->
+aria-required="true"           <!-- required field -->
 ```
 
 ---
 
-## Formularios
+## Forms
 
 ```html
-<!-- ✅ Label explícito siempre -->
+<!-- ✅ Always an explicit label -->
 <label for="email">Email</label>
 <input id="email" type="email" aria-describedby="email-hint email-error">
-<p id="email-hint">Usá tu email corporativo.</p>
+<p id="email-hint">Use your work email.</p>
 <p id="email-error" role="alert" aria-live="assertive">
-  <!-- Aparece solo cuando hay error -->
-  El email no tiene un formato válido.
+  <!-- Appears only when there's an error -->
+  The email format is not valid.
 </p>
 
-<!-- ❌ Placeholder como único label -->
+<!-- ❌ Placeholder as the only label -->
 <input type="email" placeholder="Email">
 ```
 
-### Mensajes de error
-- Aparecer en tiempo real (no solo al submit)
-- Describir QUÉ está mal y CÓMO corregirlo
-- `role="alert"` o `aria-live="assertive"` para que los lectores los anuncien
+### Error messages
+- Appear in real time (not only on submit)
+- Describe WHAT is wrong and HOW to fix it
+- `role="alert"` or `aria-live="assertive"` so screen readers announce them
 
 ---
 
-## Imágenes y medios
+## Images and media
 
 ```html
-<!-- ✅ Imagen informativa -->
-<img src="grafico.png" alt="Ventas subieron 40% en Q3 2025 respecto a Q2">
+<!-- ✅ Informative image -->
+<img src="chart.png" alt="Sales rose 40% in Q3 2025 compared to Q2">
 
-<!-- ✅ Imagen decorativa -->
-<img src="decoracion.png" alt="">
+<!-- ✅ Decorative image -->
+<img src="decoration.png" alt="">
 
-<!-- ✅ Íconos sin texto visible -->
-<button aria-label="Cerrar modal">
+<!-- ✅ Icons with no visible text -->
+<button aria-label="Close modal">
   <svg aria-hidden="true">...</svg>
 </button>
 ```
 
 ### Videos
-- Subtítulos para contenido hablado
-- Audiodescripción si hay información solo visual
-- No autoplay con sonido
+- Captions for spoken content
+- Audio description if there's information that is visual only
+- No autoplay with sound
 
 ---
 
-## Reducción de movimiento
+## Reduced motion
 
 ```css
-/* Respetar preferencia del sistema */
+/* Respect the system preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -184,22 +189,22 @@ aria-required="true"           <!-- campo obligatorio -->
 
 ---
 
-## Testing de accesibilidad
+## Accessibility testing
 
-### Automatizado (detecta ~30% de problemas)
-- **axe DevTools** (extensión Chrome) — corre en cada PR
-- **Lighthouse** — accessibility score como gate de CI
+### Automated (catches ~30% of issues)
+- **axe DevTools** (Chrome extension) — runs on every PR
+- **Lighthouse** — accessibility score as a CI gate
 
-### Manual obligatorio
+### Mandatory manual pass
 ```
-1. Navegar toda la pantalla solo con Tab
-2. Activar lector de pantalla: VoiceOver (Mac), NVDA (Win), TalkBack (Android)
-3. Zoom al 200% — ¿el layout sigue funcionando?
-4. Desactivar CSS — ¿el orden del contenido tiene sentido?
-5. Probar con solo teclado + solo mouse + solo toque
+1. Navigate the whole screen using only Tab
+2. Turn on a screen reader: VoiceOver (Mac), NVDA (Win), TalkBack (Android)
+3. Zoom to 200% — does the layout still work?
+4. Disable CSS — does the content order make sense?
+5. Test with keyboard only + mouse only + touch only
 ```
 
-### En CI (GitHub Actions)
+### In CI (GitHub Actions)
 ```yaml
 - name: Accessibility audit
   run: npx axe-cli http://localhost:3000 --exit

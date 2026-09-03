@@ -1,17 +1,22 @@
+---
+name: role-ui
+description: Visual interface craft - design tokens, typographic scale, semantic color and dark mode, mandatory component states, the 4pt spacing system, mobile-first breakpoints, and icon rules. Use when writing CSS or styling components, defining a token/theme system, building buttons/inputs/cards, or reviewing a screen's visual consistency and contrast.
+---
+
 # Skill: UI Design
 
-## Principio base
+## Base principle
 
-La UI es la traducción visual de la arquitectura de información. Si el UX está mal, la UI no lo puede salvar — pero una UI mala puede arruinar un buen UX. El objetivo es que el usuario no note el diseño porque simplemente funciona.
+The UI is the visual translation of the information architecture. If the UX is wrong, the UI cannot save it — but a bad UI can ruin good UX. The goal is for the user not to notice the design, because it simply works.
 
 ---
 
-## Design tokens — la base de todo
+## Design tokens — the foundation of everything
 
-Nunca valores mágicos en el código. Todo sale de tokens.
+Never magic values in the code. Everything comes from tokens.
 
 ```css
-/* ✅ Tokens semánticos (no atómicos) */
+/* ✅ Semantic tokens (not atomic) */
 --color-action-primary: #0066CC;
 --color-action-primary-hover: #0052A3;
 --color-feedback-error: #D93025;
@@ -42,58 +47,58 @@ Nunca valores mágicos en el código. Todo sale de tokens.
 
 ---
 
-## Tipografía
+## Typography
 
-### Escala
-- Una sola familia de fuente para UI (máximo dos: display + cuerpo)
-- Escala modular: los tamaños tienen relación matemática entre sí
-- Line-height: 1.5 para cuerpo, 1.2 para títulos
+### Scale
+- A single font family for the UI (two at most: display + body)
+- Modular scale: sizes have a mathematical relationship to each other
+- Line-height: 1.5 for body, 1.2 for headings
 
-### Legibilidad
+### Legibility
 ```
-✅ Ancho de columna: 60–75 caracteres por línea (prose)
-✅ Contraste mínimo: 4.5:1 para texto normal, 3:1 para texto grande
-✅ No centrar párrafos largos
-✅ Jerarquía: máximo 3 niveles visibles por pantalla
+✅ Column width: 60–75 characters per line (prose)
+✅ Minimum contrast: 4.5:1 for normal text, 3:1 for large text
+✅ Don't center long paragraphs
+✅ Hierarchy: at most 3 visible levels per screen
 ```
 
 ---
 
 ## Color
 
-### Paleta semántica — no decorativa
+### Semantic palette — not decorative
 ```
-Primary:    acción principal del usuario
-Secondary:  acción secundaria / soporte
-Success:    confirmación, completado
-Warning:    precaución, requiere atención
-Error:      fallo, bloqueante
-Neutral:    texto, bordes, superficies
+Primary:    the user's primary action
+Secondary:  secondary / supporting action
+Success:    confirmation, completed
+Warning:    caution, needs attention
+Error:      failure, blocking
+Neutral:    text, borders, surfaces
 ```
 
-### Regla del color
-- El color no es la única forma de comunicar estado (crítico para a11y)
-- Si sacás el color y el significado se pierde → el diseño falla
-- Acompañar siempre con ícono + texto
+### The color rule
+- Color is never the only way to communicate state (critical for a11y)
+- If you remove the color and the meaning is lost → the design fails
+- Always pair it with an icon + text
 
 ### Dark mode
 ```css
-/* Tokens con modo */
+/* Tokens with mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --color-surface-default: #121212;
     --color-surface-subtle: #1E1E1E;
     --color-text-primary: #E8E8E8;
-    /* El color de acción puede cambiar levemente */
+    /* The action color may shift slightly */
   }
 }
 ```
 
 ---
 
-## Componentes — estados obligatorios
+## Components — mandatory states
 
-Todo componente interactivo debe tener estos estados diseñados:
+Every interactive component must have these states designed:
 
 ```
 Default → Hover → Focus → Active → Disabled → Loading → Error
@@ -102,21 +107,21 @@ Default → Hover → Focus → Active → Disabled → Loading → Error
 ```
 Input:   Default | Focus | Filled | Error | Disabled
 Button:  Default | Hover | Focus | Active | Loading | Disabled
-Card:    Default | Hover (si es clickeable) | Selected
+Card:    Default | Hover (if clickable) | Selected
 ```
 
 ---
 
-## Espaciado — sistema de 4pt
+## Spacing — 4pt system
 
-Todo margen, padding y gap debe ser múltiplo de 4.
+Every margin, padding, and gap must be a multiple of 4.
 
 ```
-4px  — separación mínima entre elementos relacionados
-8px  — separación dentro de un componente
-16px — separación entre componentes del mismo grupo
-24px — separación entre secciones
-40px — separación entre bloques mayores
+4px  — minimum separation between related elements
+8px  — separation within a component
+16px — separation between components in the same group
+24px — separation between sections
+40px — separation between major blocks
 ```
 
 ---
@@ -124,42 +129,42 @@ Todo margen, padding y gap debe ser múltiplo de 4.
 ## Responsive — mobile first
 
 ```css
-/* Breakpoints recomendados */
---bp-sm: 640px;   /* teléfonos grandes */
+/* Recommended breakpoints */
+--bp-sm: 640px;   /* large phones */
 --bp-md: 768px;   /* tablets */
 --bp-lg: 1024px;  /* laptops */
 --bp-xl: 1280px;  /* desktops */
 ```
 
-### Reglas
-- Diseñar primero en 375px (iPhone SE), luego escalar
-- Touch target mínimo: 44×44px
-- No depender de hover para funcionalidad crítica (touch no tiene hover)
-- Stacks verticales en mobile, horizontales en desktop
+### Rules
+- Design first at 375px (iPhone SE), then scale up
+- Minimum touch target: 44×44px
+- Don't rely on hover for critical functionality (touch has no hover)
+- Vertical stacks on mobile, horizontal on desktop
 
 ---
 
-## Íconos
+## Icons
 
 ```
-✅ Sistema unificado (Lucide, Heroicons, Phosphor — uno solo)
-✅ Tamaño consistente: 16px, 20px, 24px
-✅ Siempre con label visible o aria-label
-✅ No mezclar estilos (outline vs filled)
-✅ Íconos de estado: siempre acompañados de color + texto
+✅ A unified system (Lucide, Heroicons, Phosphor — pick one)
+✅ Consistent sizing: 16px, 20px, 24px
+✅ Always with a visible label or aria-label
+✅ Don't mix styles (outline vs filled)
+✅ Status icons: always accompanied by color + text
 ```
 
 ---
 
-## Lo que NO hacer
+## What NOT to do
 
 ```
-❌ Más de 2 fuentes en el mismo producto
-❌ Colores que no están en el sistema de tokens
-❌ Padding inconsistente (ej: 13px, 17px, 22px)
-❌ Animaciones de más de 300ms en interacciones frecuentes
-❌ Modales que abren modales
-❌ Scroll horizontal en mobile
-❌ Texto blanco sobre imagen sin overlay
-❌ Placeholder como única instrucción en un campo de formulario
+❌ More than 2 fonts in the same product
+❌ Colors that are not in the token system
+❌ Inconsistent padding (e.g.: 13px, 17px, 22px)
+❌ Animations longer than 300ms on frequent interactions
+❌ Modals that open modals
+❌ Horizontal scroll on mobile
+❌ White text over an image with no overlay
+❌ Placeholder as the only instruction in a form field
 ```

@@ -1,19 +1,24 @@
+---
+name: infra-docker
+description: Docker standards - multi-stage builds for Python, Go, Node/TypeScript and Java, .dockerignore, Docker Compose for local dev, non-root images, and a container security checklist. Use when writing or reviewing a Dockerfile, docker-compose.yml, .dockerignore, or containerizing an app for CI/CD.
+---
+
 # Skill: Docker
 
-## Principios
-- Imágenes mínimas: solo lo necesario en producción
-- Multi-stage builds: separar build de runtime
-- Usuario no root en producción
-- Un proceso por contenedor
-- Inmutable: sin cambios en runtime, toda config por env vars
+## Principles
+- Minimal images: only what production needs
+- Multi-stage builds: separate build from runtime
+- Non-root user in production
+- One process per container
+- Immutable: no runtime changes, all config via env vars
 
 ---
 
-## Multi-stage builds por lenguaje
+## Multi-stage builds by language
 
 ### Python
 ```dockerfile
-# Stage 1: dependencias
+# Stage 1: dependencies
 FROM python:3.12-slim AS builder
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
@@ -39,7 +44,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/api
 
-# Stage 2: runtime mínimo
+# Stage 2: minimal runtime
 FROM scratch
 COPY --from=builder /app/server /server
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
@@ -78,7 +83,7 @@ RUN ./gradlew dependencies --no-daemon
 COPY src/ src/
 RUN ./gradlew bootJar --no-daemon
 
-# Stage 2: runtime (JRE, no JDK)
+# Stage 2: runtime (JRE, not JDK)
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
@@ -89,7 +94,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ---
 
-## .dockerignore — siempre presente
+## .dockerignore — always present
 
 ```
 .git
@@ -112,7 +117,7 @@ build/
 
 ---
 
-## Docker Compose — desarrollo local
+## Docker Compose — local development
 
 ```yaml
 # docker-compose.yml
@@ -130,7 +135,7 @@ services:
       cache:
         condition: service_started
     volumes:
-      - ./src:/app/src  # hot reload en dev
+      - ./src:/app/src  # hot reload in dev
 
   db:
     image: postgres:16-alpine
@@ -158,17 +163,17 @@ volumes:
 
 ---
 
-## Checklist de seguridad
+## Security checklist
 
-- [ ] Usuario no root (`USER appuser`)
-- [ ] Sin secrets en Dockerfile ni en imagen (usar `--secret` o env vars en runtime)
-- [ ] Imagen base con tag específico, no `latest`
-- [ ] `.dockerignore` presente y completo
-- [ ] Sin herramientas de build en imagen final
-- [ ] Escaneo de vulnerabilidades en CI (Trivy / Snyk)
+- [ ] Non-root user (`USER appuser`)
+- [ ] No secrets in the Dockerfile or in the image (use `--secret` or runtime env vars)
+- [ ] Base image pinned to a specific tag, not `latest`
+- [ ] `.dockerignore` present and complete
+- [ ] No build tooling in the final image
+- [ ] Vulnerability scanning in CI (Trivy / Snyk)
 
 ```yaml
-# CI: escanear imagen con Trivy
+# CI: scan the image with Trivy
 - name: Scan image
   uses: aquasecurity/trivy-action@master
   with:
@@ -179,7 +184,7 @@ volumes:
 
 ---
 
-## Tamaños de imagen orientativos
+## Ballpark image sizes
 
 | Stack | Base | Multi-stage |
 |-------|------|-------------|
@@ -190,11 +195,11 @@ volumes:
 
 ---
 
-## Decisiones comunes en Docker
+## Common Docker decisions
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
+Apply the decision protocol from CLAUDE.md when facing:
 - **Base image:** distroless vs alpine vs slim vs scratch
-- **Orquestación:** Docker Compose vs ECS vs Kubernetes
+- **Orchestration:** Docker Compose vs ECS vs Kubernetes
 - **Registry:** ECR vs GHCR vs Docker Hub
-- **Secrets en runtime:** env vars vs Docker secrets vs AWS Secrets Manager
-- **Volúmenes en dev:** bind mount vs named volume
+- **Runtime secrets:** env vars vs Docker secrets vs AWS Secrets Manager
+- **Dev volumes:** bind mount vs named volume

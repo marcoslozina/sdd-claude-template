@@ -1,42 +1,47 @@
+---
+name: role-frontend
+description: React 18 + strict TypeScript frontend standards: folder structure, container/presentational split, state selection (useState, Zustand, TanStack Query), typed props, memoization, and a11y rules. Use when writing or reviewing .tsx/.jsx components, hooks, stores, or choosing a frontend state/routing/styling library.
+---
+
 # Skill: Frontend
 
-## Stack base
-React 18+ con TypeScript estricto. Sin `any`. Sin `// @ts-ignore`.
+## Base stack
+React 18+ with strict TypeScript. No `any`. No `// @ts-ignore`.
 
 ---
 
-## Estructura de proyecto
+## Project structure
 
 ```
 src/
   components/
-    ui/              # átomos: Button, Input, Badge (sin lógica de negocio)
-    features/        # organismos por feature: UserCard, CheckoutForm
-    layouts/         # shells de página: DashboardLayout, AuthLayout
-  pages/             # entry points de rutas (mínima lógica)
-  hooks/             # custom hooks reutilizables
-  stores/            # estado global (Zustand / Redux Toolkit)
-  services/          # llamadas a API (sin lógica de UI)
-  types/             # tipos e interfaces compartidos
-  utils/             # funciones puras sin side effects
+    ui/              # atoms: Button, Input, Badge (no business logic)
+    features/        # per-feature organisms: UserCard, CheckoutForm
+    layouts/         # page shells: DashboardLayout, AuthLayout
+  pages/             # route entry points (minimal logic)
+  hooks/             # reusable custom hooks
+  stores/            # global state (Zustand / Redux Toolkit)
+  services/          # API calls (no UI logic)
+  types/             # shared types and interfaces
+  utils/             # pure functions with no side effects
 ```
 
 ---
 
-## Principios de componentes
+## Component principles
 
 ### Container / Presentational
 ```tsx
-// ✅ Presentational: recibe datos, no los busca
+// ✅ Presentational: receives data, doesn't fetch it
 const UserCard = ({ name, email, onEdit }: UserCardProps) => (
   <div>
     <h2>{name}</h2>
     <p>{email}</p>
-    <button onClick={onEdit}>Editar</button>
+    <button onClick={onEdit}>Edit</button>
   </div>
 )
 
-// ✅ Container: busca datos, delega render
+// ✅ Container: fetches data, delegates rendering
 const UserCardContainer = ({ userId }: { userId: string }) => {
   const { user, isLoading } = useUser(userId)
   if (isLoading) return <Skeleton />
@@ -44,32 +49,32 @@ const UserCardContainer = ({ userId }: { userId: string }) => {
 }
 ```
 
-### Regla de responsabilidad única
-- Un componente hace una cosa
-- Si el nombre tiene "And" → dividir (`UserFormAndValidation` → dos componentes)
-- Props máximas: ~5-7. Más → extraer objeto o dividir componente
+### Single responsibility rule
+- A component does one thing
+- If the name contains "And" → split it (`UserFormAndValidation` → two components)
+- Max props: ~5-7. More than that → extract an object or split the component
 
 ---
 
-## Estado — cuándo usar qué
+## State — when to use what
 
-| Tipo de estado | Solución |
+| State type | Solution |
 |---------------|---------|
 | Local UI (toggle, form) | `useState` |
-| Estado derivado | `useMemo` / computar en render |
-| Side effects | `useEffect` (con dependencias explícitas) |
-| Estado global de UI | Zustand |
-| Estado del servidor | TanStack Query / SWR |
-| Formularios complejos | React Hook Form |
+| Derived state | `useMemo` / compute during render |
+| Side effects | `useEffect` (with explicit dependencies) |
+| Global UI state | Zustand |
+| Server state | TanStack Query / SWR |
+| Complex forms | React Hook Form |
 
-**Regla:** el estado vive en el nivel más bajo posible que lo necesite.
+**Rule:** state lives at the lowest level that needs it.
 
 ---
 
-## TypeScript en componentes
+## TypeScript in components
 
 ```tsx
-// ✅ Props tipadas explícitamente
+// ✅ Explicitly typed props
 interface ButtonProps {
   label: string
   variant: 'primary' | 'secondary' | 'danger'
@@ -77,10 +82,10 @@ interface ButtonProps {
   onClick: () => void
 }
 
-// ✅ Generics en hooks reutilizables
+// ✅ Generics in reusable hooks
 function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void]
 
-// ✅ Discriminated unions para estados
+// ✅ Discriminated unions for states
 type AsyncState<T> =
   | { status: 'idle' }
   | { status: 'loading' }
@@ -93,39 +98,39 @@ type AsyncState<T> =
 ## Performance
 
 ```tsx
-// Memorizar componentes costosos
+// Memoize expensive components
 const ExpensiveList = memo(({ items }: { items: Item[] }) => ...)
 
-// Memorizar cálculos costosos
+// Memoize expensive computations
 const sorted = useMemo(() => items.sort(compareFn), [items])
 
-// Estabilizar callbacks
+// Stabilize callbacks
 const handleClick = useCallback(() => doSomething(id), [id])
 
-// Code splitting por ruta
+// Route-level code splitting
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 ```
 
-**Cuándo NO memorizar:** componentes simples, renders baratos. La memorización tiene costo.
+**When NOT to memoize:** simple components, cheap renders. Memoization has a cost.
 
 ---
 
-## Accesibilidad (a11y) — no negociable
+## Accessibility (a11y) — non-negotiable
 
-- Botones con `aria-label` si no tienen texto visible
-- Imágenes con `alt` descriptivo (o `alt=""` si es decorativa)
-- Formularios con `<label>` asociado a cada `<input>`
-- Foco visible (no `outline: none` sin reemplazo)
-- Color no como único diferenciador de información
+- Buttons with `aria-label` when they have no visible text
+- Images with descriptive `alt` (or `alt=""` if decorative)
+- Forms with a `<label>` associated to every `<input>`
+- Visible focus (no `outline: none` without a replacement)
+- Color never as the only differentiator of information
 
 ---
 
-## Decisiones de arquitectura comunes en Frontend
+## Common Frontend architecture decisions
 
-Aplicar protocolo de decisión del CLAUDE.md ante:
-- **Estado global:** Zustand vs Redux Toolkit vs Context API
-- **Data fetching:** TanStack Query vs SWR vs fetch manual
+Apply the decision protocol from CLAUDE.md when facing:
+- **Global state:** Zustand vs Redux Toolkit vs Context API
+- **Data fetching:** TanStack Query vs SWR vs manual fetch
 - **Routing:** React Router vs TanStack Router
-- **Estilos:** Tailwind vs CSS Modules vs styled-components
-- **Forms:** React Hook Form vs Formik vs controlled manual
+- **Styling:** Tailwind vs CSS Modules vs styled-components
+- **Forms:** React Hook Form vs Formik vs manual controlled
 - **Testing:** React Testing Library vs Playwright vs Cypress

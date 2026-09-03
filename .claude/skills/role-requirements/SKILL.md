@@ -1,169 +1,174 @@
+---
+name: role-requirements
+description: Turning vague ideas into testable requirements - Given/When/Then acceptance criteria, Example Mapping, Definition of Ready/Done, minimal PRDs, and non-functional requirements. Use when scoping a new feature, requirements are ambiguous, acceptance criteria are missing, or during the SDD explore/spec/verify phases.
+---
+
 # Skill: Requirements Engineering
 
-## Rol
-Transformar ideas vagas en requisitos testeables antes de escribir una línea de código.
-Un requisito mal escrito es más caro que ningún requisito — genera código que pasa los tests
-pero no resuelve el problema real.
+## Role
+Turn vague ideas into testable requirements before writing a single line of code.
+A badly written requirement is more expensive than no requirement at all — it produces code that passes the tests
+but does not solve the real problem.
 
-## Cuándo activar este skill
-- El usuario describe un feature nuevo
-- Los requisitos son ambiguos, contradictorios o asumen conocimiento implícito
-- No hay criterios de aceptación claros
-- El equipo discute sobre si algo "está hecho" o no
-- Fase de Exploración o Spec en el flujo SDD
-
----
-
-## Regla de oro
-
-```
-Un requisito es bueno si dos personas independientes lo leen
-y llegan a la misma conclusión sobre qué construir.
-Si no — reescribilo.
-```
+## When to activate this skill
+- The user describes a new feature
+- Requirements are ambiguous, contradictory, or assume implicit knowledge
+- There are no clear acceptance criteria
+- The team argues about whether something is "done" or not
+- Exploration or Spec phase in the SDD flow
 
 ---
 
-## Anatomía de un buen requisito
+## Golden rule
 
 ```
-❌ "El usuario puede filtrar productos"
-
-✅ GIVEN un usuario autenticado con al menos 1 producto en catálogo
-   WHEN aplica filtro por categoría = "electrónica" y precio máximo = $500
-   THEN ve solo los productos que cumplen ambas condiciones
-   AND el conteo del header refleja la cantidad filtrada
-   AND si no hay resultados, ve el empty state con CTA para limpiar filtros
+A requirement is good if two independent people read it
+and reach the same conclusion about what to build.
+If not — rewrite it.
 ```
-
-**Checklist de un requisito testeable:**
-- [ ] Tiene sujeto claro (¿quién?)
-- [ ] Tiene acción específica (¿qué hace exactamente?)
-- [ ] Tiene condición de entrada (¿desde qué estado?)
-- [ ] Tiene resultado observable y verificable
-- [ ] Incluye el caso de error o edge case
 
 ---
 
-## Example Mapping — descubrir requisitos con el equipo
-
-Example Mapping es una técnica de 30-45 minutos para explorar un feature antes de estimarlo.
-Usa 4 tipos de tarjetas:
+## Anatomy of a good requirement
 
 ```
-🟡 HISTORIA    → "El usuario puede pagar con tarjeta"
-🔵 REGLA       → "Solo acepta Visa y Mastercard"
-🟢 EJEMPLO     → "Juan paga $500 con Visa → recibe confirmación"
-🟢 EJEMPLO     → "Juan intenta pagar con Amex → ve error específico"
-🔴 PREGUNTA    → "¿Qué pasa si el banco rechaza por fondos insuficientes?"
+❌ "The user can filter products"
+
+✅ GIVEN an authenticated user with at least 1 product in the catalog
+   WHEN they apply the filter category = "electronics" and max price = $500
+   THEN they see only the products that meet both conditions
+   AND the header count reflects the filtered quantity
+   AND if there are no results, they see the empty state with a CTA to clear filters
 ```
 
-**Protocolo:**
-1. Escribir la historia en una tarjeta amarilla
-2. Por cada regla de negocio → tarjeta azul
-3. Por cada regla → al menos 1 ejemplo feliz + 1 ejemplo de error (tarjetas verdes)
-4. Dudas que surgen → tarjetas rojas (a resolver ANTES de estimar)
+**Checklist for a testable requirement:**
+- [ ] Has a clear subject (who?)
+- [ ] Has a specific action (what exactly does it do?)
+- [ ] Has an entry condition (from which state?)
+- [ ] Has an observable, verifiable outcome
+- [ ] Includes the error case or edge case
 
-**Señal de que el feature está listo para estimar:** pocas tarjetas rojas.
-**Señal de que NO está listo:** muchas tarjetas rojas → más preguntas que respuestas.
+---
+
+## Example Mapping — discovering requirements with the team
+
+Example Mapping is a 30-45 minute technique to explore a feature before estimating it.
+It uses 4 types of cards:
+
+```
+🟡 STORY       → "The user can pay by card"
+🔵 RULE        → "Only Visa and Mastercard are accepted"
+🟢 EXAMPLE     → "Juan pays $500 with Visa → receives confirmation"
+🟢 EXAMPLE     → "Juan tries to pay with Amex → sees a specific error"
+🔴 QUESTION    → "What happens if the bank declines for insufficient funds?"
+```
+
+**Protocol:**
+1. Write the story on a yellow card
+2. For each business rule → a blue card
+3. For each rule → at least 1 happy example + 1 error example (green cards)
+4. Doubts that come up → red cards (to be resolved BEFORE estimating)
+
+**Sign the feature is ready to estimate:** few red cards.
+**Sign it is NOT ready:** many red cards → more questions than answers.
 
 ---
 
 ## Definition of Ready (DoR)
 
-Un requisito no entra al sprint hasta cumplir:
+A requirement does not enter the sprint until it meets:
 
-- [ ] Criterios de aceptación escritos en formato Given/When/Then
-- [ ] Edge cases identificados (¿qué pasa si falla? ¿si está vacío? ¿si hay permisos?)
-- [ ] Dependencias externas identificadas (APIs, servicios, equipos)
-- [ ] Diseño de UI acordado (si aplica)
-- [ ] No hay preguntas abiertas bloqueantes
-- [ ] Estimación posible sin supuestos grandes
+- [ ] Acceptance criteria written in Given/When/Then format
+- [ ] Edge cases identified (what happens if it fails? if it's empty? if there are permissions involved?)
+- [ ] External dependencies identified (APIs, services, teams)
+- [ ] UI design agreed (if applicable)
+- [ ] No blocking open questions
+- [ ] Estimation possible without big assumptions
 
 ---
 
 ## Definition of Done (DoD)
 
-Un requisito está "hecho" cuando:
+A requirement is "done" when:
 
-- [ ] Criterios de aceptación verificados manualmente
-- [ ] Tests automatizados cubriendo el happy path y casos edge
-- [ ] Code review aprobado
-- [ ] Sin regresiones detectadas en funcionalidad existente
-- [ ] Documentación actualizada si cambia una API pública
-- [ ] Desplegado en ambiente de staging
+- [ ] Acceptance criteria verified manually
+- [ ] Automated tests covering the happy path and edge cases
+- [ ] Code review approved
+- [ ] No regressions detected in existing functionality
+- [ ] Documentation updated if a public API changes
+- [ ] Deployed to the staging environment
 
 ---
 
-## PRD mínimo viable
+## Minimum viable PRD
 
-Para features con más de 3 días de trabajo, documentar antes de implementar:
+For features requiring more than 3 days of work, document before implementing:
 
 ```markdown
-## Feature: [nombre]
+## Feature: [name]
 
-### Problema que resuelve
-[1 párrafo — qué dolor tiene el usuario hoy]
+### Problem it solves
+[1 paragraph — what pain the user has today]
 
-### Usuarios afectados
-[Quién se beneficia y quién podría verse afectado negativamente]
+### Affected users
+[Who benefits and who could be negatively affected]
 
-### Solución propuesta
-[Qué construimos — no el cómo, el qué]
+### Proposed solution
+[What we build — not the how, the what]
 
-### Criterios de éxito
-- Métrica 1: [qué medimos y cuál es el target]
-- Métrica 2: ...
+### Success criteria
+- Metric 1: [what we measure and what the target is]
+- Metric 2: ...
 
-### Fuera de scope (explícito)
-- [Qué NO incluye esta versión]
+### Out of scope (explicit)
+- [What this version does NOT include]
 
-### Requisitos funcionales
+### Functional requirements
 1. GIVEN ... WHEN ... THEN ...
 2. ...
 
-### Requisitos no funcionales
-- Performance: [ej: respuesta < 200ms en p95]
-- Seguridad: [ej: solo usuarios con rol admin]
-- Disponibilidad: [ej: sin downtime en deploy]
+### Non-functional requirements
+- Performance: [e.g.: response < 200ms at p95]
+- Security: [e.g.: admin role users only]
+- Availability: [e.g.: no downtime on deploy]
 
-### Riesgos
-- [Riesgo técnico o de negocio conocido]
+### Risks
+- [Known technical or business risk]
 ```
 
 ---
 
-## Requisitos no funcionales — los que siempre se olvidan
+## Non-functional requirements — the ones always forgotten
 
-| Categoría | Preguntas a hacer |
+| Category | Questions to ask |
 |-----------|-----------------|
-| **Performance** | ¿Cuántos usuarios concurrentes? ¿Latencia aceptable en p95? ¿Hay SLO? |
-| **Seguridad** | ¿Quién puede acceder? ¿Qué datos son sensibles? ¿Auditoría requerida? |
-| **Disponibilidad** | ¿Puede haber downtime en deploy? ¿Qué pasa si falla un servicio externo? |
-| **Escalabilidad** | ¿El volumen puede crecer 10x en 6 meses? ¿Hay picos predecibles? |
-| **Observabilidad** | ¿Qué métricas necesitamos para saber que funciona en producción? |
-| **Internacionalización** | ¿Múltiples idiomas? ¿Zonas horarias? ¿Formatos de fecha/moneda? |
+| **Performance** | How many concurrent users? Acceptable latency at p95? Is there an SLO? |
+| **Security** | Who can access it? Which data is sensitive? Is auditing required? |
+| **Availability** | Can there be downtime on deploy? What happens if an external service fails? |
+| **Scalability** | Could volume grow 10x in 6 months? Are there predictable peaks? |
+| **Observability** | Which metrics do we need to know it works in production? |
+| **Internationalization** | Multiple languages? Time zones? Date/currency formats? |
 
 ---
 
-## Señales de requisitos problemáticos
+## Signs of problematic requirements
 
-| Señal | Problema | Acción |
+| Sign | Problem | Action |
 |-------|---------|--------|
-| "El sistema debería ser rápido" | No testeable | Definir métrica concreta: "< 200ms p95" |
-| "El usuario puede gestionar X" | Ambiguo | Descomponer: crear, editar, eliminar, listar — son 4 requisitos |
-| "Como siempre lo hemos hecho" | Asunción implícita | Documentar el comportamiento explícitamente |
-| "Obviamente también hace Y" | Scope creep implícito | Escribirlo o excluirlo — nunca asumir |
-| "Igual que el sistema anterior" | Deuda oculta | Mapear el sistema anterior antes de asumir paridad |
+| "The system should be fast" | Not testable | Define a concrete metric: "< 200ms p95" |
+| "The user can manage X" | Ambiguous | Break it down: create, edit, delete, list — that's 4 requirements |
+| "The way we've always done it" | Implicit assumption | Document the behavior explicitly |
+| "Obviously it also does Y" | Implicit scope creep | Write it down or exclude it — never assume |
+| "Same as the previous system" | Hidden debt | Map the previous system before assuming parity |
 
 ---
 
-## Integración con SDD
+## Integration with SDD
 
-En el flujo SDD, este skill activa en:
+In the SDD flow, this skill activates in:
 
-- **Fase 1 (Exploración):** identificar incógnitas y preguntas abiertas
-- **Fase 3 (Spec):** escribir criterios de aceptación en Given/When/Then
-- **Fase 6 (Verificación):** validar que la implementación cumple los criterios
+- **Phase 1 (Exploration):** identify unknowns and open questions
+- **Phase 3 (Spec):** write acceptance criteria in Given/When/Then
+- **Phase 6 (Verification):** validate that the implementation meets the criteria
 
-Antes de arrancar la Fase 3, correr Example Mapping con el usuario para vaciar las tarjetas rojas.
+Before starting Phase 3, run Example Mapping with the user to clear out the red cards.

@@ -1,120 +1,125 @@
+---
+name: role-ux
+description: User experience and product flows - discovery questions and jobs-to-be-done, information architecture, happy path plus empty/error/loading states, Nielsen usability heuristics, micro-interactions, onboarding, and deliverables per phase. Use when mapping a user flow, defining screen structure or navigation, designing empty/error states or onboarding, or auditing usability.
+---
+
 # Skill: UX Design
 
-## Principio base
+## Base principle
 
-El diseño empieza por el problema del usuario, no por la pantalla. Antes de proponer cualquier flujo, entender: ¿quién lo usa, cuándo, con qué objetivo, y qué alternativa tiene hoy?
-
----
-
-## Descubrimiento — preguntas obligatorias antes de diseñar
-
-```
-¿Quién es el usuario? (rol, contexto, nivel técnico)
-¿Cuál es el job-to-be-done? (no "quiero hacer X" sino "para poder Y")
-¿Con qué frecuencia ocurre esta tarea?
-¿Qué pasa si no puede completarla?
-¿Qué hace hoy para resolver esto?
-```
-
-No empieces wireframes hasta tener respuestas claras.
+Design starts with the user's problem, not with the screen. Before proposing any flow, understand: who uses it, when, with what goal, and what alternative do they have today?
 
 ---
 
-## Arquitectura de información
+## Discovery — mandatory questions before designing
 
-### Jerarquía de contenido
 ```
-1. ¿Qué puede hacer el usuario aquí? (acción principal)
-2. ¿Qué necesita saber para decidir? (información de soporte)
-3. ¿Qué puede explorar después? (secundario)
+Who is the user? (role, context, technical level)
+What is the job-to-be-done? (not "I want to do X" but "so that I can Y")
+How often does this task happen?
+What happens if they can't complete it?
+What do they do today to solve this?
 ```
 
-### Principio de una pantalla, una acción primaria
-Cada pantalla tiene UNA acción principal clara. Si hay dos acciones igual de importantes, hay un problema de arquitectura, no de diseño.
+Don't start wireframes until you have clear answers.
 
 ---
 
-## Flujos de usuario
+## Information architecture
 
-### Mapear el camino feliz primero
+### Content hierarchy
 ```
-Entrada → Acción 1 → Acción 2 → ... → Estado de éxito
+1. What can the user do here? (primary action)
+2. What do they need to know to decide? (supporting information)
+3. What can they explore next? (secondary)
 ```
 
-### Luego los estados de error y edge cases
-- ¿Qué pasa si el usuario no tiene datos todavía? (empty state)
-- ¿Qué pasa si la acción falla? (error state)
-- ¿Qué pasa si tarda más de lo esperado? (loading state)
-- ¿Qué pasa si el usuario se va a la mitad? (interrupción)
-
-### Señales de flujo roto
-- El usuario necesita ir "para atrás" para completar una tarea
-- Hay más de 3 pantallas para una tarea simple
-- El usuario pregunta "¿y ahora qué hago?"
+### One screen, one primary action
+Every screen has ONE clear primary action. If there are two equally important actions, you have an architecture problem, not a design problem.
 
 ---
 
-## Principios de usabilidad (Nielsen)
+## User flows
 
-| Principio | Qué significa en la práctica |
+### Map the happy path first
+```
+Entry → Action 1 → Action 2 → ... → Success state
+```
+
+### Then the error states and edge cases
+- What happens if the user has no data yet? (empty state)
+- What happens if the action fails? (error state)
+- What happens if it takes longer than expected? (loading state)
+- What happens if the user leaves halfway through? (interruption)
+
+### Signs of a broken flow
+- The user needs to go "back" to complete a task
+- There are more than 3 screens for a simple task
+- The user asks "so what do I do now?"
+
+---
+
+## Usability principles (Nielsen)
+
+| Principle | What it means in practice |
 |-----------|------------------------------|
-| Visibilidad del estado | El sistema siempre muestra qué está pasando (loading, éxito, error) |
-| Match con el mundo real | Usar vocabulario del usuario, no del sistema |
-| Control y libertad | Siempre hay un "deshacer" o "cancelar" |
-| Consistencia | El mismo elemento hace lo mismo siempre |
-| Prevención de errores | Mejor prevenir que mostrar mensajes de error |
-| Reconocimiento > Recuerdo | El usuario no debería tener que memorizar cosas |
-| Flexibilidad | Atajos para usuarios avanzados sin complicar para novatos |
-| Estética minimalista | Nada que no contribuya directamente al objetivo |
-| Recuperación de errores | Mensajes claros + solución concreta |
-| Ayuda y documentación | Si necesita explicación, el diseño falló primero |
+| Visibility of system status | The system always shows what's happening (loading, success, error) |
+| Match with the real world | Use the user's vocabulary, not the system's |
+| Control and freedom | There is always an "undo" or "cancel" |
+| Consistency | The same element always does the same thing |
+| Error prevention | Better to prevent than to show error messages |
+| Recognition > Recall | The user shouldn't have to memorize things |
+| Flexibility | Shortcuts for advanced users without complicating it for beginners |
+| Minimalist aesthetic | Nothing that doesn't contribute directly to the goal |
+| Error recovery | Clear messages + a concrete solution |
+| Help and documentation | If it needs an explanation, the design failed first |
 
 ---
 
-## Empty states — uno de los más olvidados
+## Empty states — one of the most overlooked
 
 ```
-❌ Estado vacío genérico: "No hay datos"
-✅ Estado vacío útil:
-   - Ilustración contextual (no decorativa)
-   - Explicar POR QUÉ está vacío
-   - CTA para que deje de estar vacío
-   - Ejemplo de cómo se vería con datos
+❌ Generic empty state: "No data"
+✅ Useful empty state:
+   - Contextual illustration (not decorative)
+   - Explain WHY it's empty
+   - A CTA so it stops being empty
+   - An example of how it would look with data
 ```
 
 ---
 
-## Micro-interacciones
+## Micro-interactions
 
-Las transiciones y feedback inmediato reducen la carga cognitiva:
+Transitions and immediate feedback reduce cognitive load:
 
-- **Feedback de acción**: el botón reacciona al click (visual + timing)
-- **Progreso**: si tarda >1s, mostrar progreso; si tarda >3s, dar estimación
-- **Confirmación de éxito**: el usuario sabe que funcionó sin leer texto
-- **Error in-context**: el error aparece donde ocurrió, no en una alerta genérica
+- **Action feedback**: the button reacts to the click (visual + timing)
+- **Progress**: if it takes >1s, show progress; if it takes >3s, give an estimate
+- **Success confirmation**: the user knows it worked without reading text
+- **In-context errors**: the error appears where it happened, not in a generic alert
 
 ---
 
 ## Onboarding
 
 ```
-❌ Tour de 8 pasos con tooltips en todo
-✅ Onboarding efectivo:
-   - Mostrar valor antes de pedir esfuerzo
-   - Una acción a la vez
-   - El usuario aprende haciendo, no leyendo
-   - Skip siempre disponible
-   - El usuario puede volver a ver el onboarding después
+❌ An 8-step tour with tooltips on everything
+✅ Effective onboarding:
+   - Show value before asking for effort
+   - One action at a time
+   - The user learns by doing, not by reading
+   - Skip always available
+   - The user can revisit the onboarding later
 ```
 
 ---
 
-## Entregables por fase
+## Deliverables per phase
 
-| Fase | Entregable | Herramienta sugerida |
+| Phase | Deliverable | Suggested tool |
 |------|-----------|---------------------|
-| Descubrimiento | User journey map, JTBD | Miro, FigJam |
-| Arquitectura | Sitemap, flujos de pantalla | Whimsical, FigJam |
-| Exploración | Wireframes de baja fidelidad | Figma (sin estilos) |
-| Validación | Prototipo clickeable | Figma prototype |
-| Especificación | Anotaciones + estados | Figma + Dev Mode |
+| Discovery | User journey map, JTBD | Miro, FigJam |
+| Architecture | Sitemap, screen flows | Whimsical, FigJam |
+| Exploration | Low-fidelity wireframes | Figma (unstyled) |
+| Validation | Clickable prototype | Figma prototype |
+| Specification | Annotations + states | Figma + Dev Mode |

@@ -1,51 +1,56 @@
+---
+name: lang-java
+description: Java 21+ standards - hexagonal package layout, records for value objects and DTOs, domain entities and use cases, Spring Boot DI, and JUnit 5 + Mockito + AssertJ + Testcontainers testing. Use when writing or reviewing Java code, .java files, Gradle/Maven builds, or Spring Boot services.
+---
+
 # Skill: Java
 
-## Setup de proyecto
+## Project setup
 
-**Gradle (preferido):**
+**Gradle (preferred):**
 ```bash
 gradle init --type java-application --dsl kotlin
 ```
 
 **Maven:**
 ```bash
-mvn archetype:generate -DgroupId=com.ejemplo -DartifactId=nombre
+mvn archetype:generate -DgroupId=com.example -DartifactId=name
 ```
 
-Java 21+ con records, sealed classes y pattern matching disponibles.
+Java 21+ with records, sealed classes and pattern matching available.
 
-## Convenciones obligatorias
+## Mandatory conventions
 
 - Java 21+
-- Records para value objects y DTOs inmutables
-- `Optional<T>` solo en returns, nunca como parámetro
-- Excepciones de dominio unchecked (`extends RuntimeException`)
-- Paquetes por capa, no por tipo (`domain.user`, no `entities.User`)
+- Records for value objects and immutable DTOs
+- `Optional<T>` only in returns, never as a parameter
+- Unchecked domain exceptions (`extends RuntimeException`)
+- Packages by layer, not by type (`domain.user`, not `entities.User`)
 
-## Estructura de capas
+## Layer structure
 
 ```
-src/main/java/com/ejemplo/
+src/main/java/com/example/
   domain/
-    model/           # entidades, value objects, aggregates
-    port/            # interfaces (inbound y outbound)
-    exception/       # excepciones de dominio
+    model/           # entities, value objects, aggregates
+    port/            # interfaces (inbound and outbound)
+    exception/       # domain exceptions
   application/
-    usecase/         # casos de uso (implementan ports inbound)
-    service/         # servicios de aplicación
+    usecase/         # use cases (implement inbound ports)
+    service/         # application services
   infrastructure/
     adapter/
       in/            # REST controllers, consumers
-      out/           # repos, clients HTTP, etc.
-    config/          # beans de Spring, configuración
+      out/           # repos, HTTP clients, etc.
+    config/          # Spring beans, configuration
 src/test/java/
   unit/
   integration/
 ```
 
-## Patrones clave
+## Key patterns
 
-### Port de salida (outbound)
+### Outbound port
 ```java
 // domain/port/UserRepository.java
 public interface UserRepository {
@@ -54,7 +59,7 @@ public interface UserRepository {
 }
 ```
 
-### Entidad de dominio
+### Domain entity
 ```java
 // domain/model/User.java
 public class User {
@@ -74,7 +79,7 @@ public class User {
 }
 ```
 
-### Value Object con record
+### Value Object with a record
 ```java
 // domain/model/UserId.java
 public record UserId(UUID value) {
@@ -102,7 +107,7 @@ public class CreateUserUseCase {
 }
 ```
 
-### Con Spring Boot (DI automático)
+### With Spring Boot (automatic DI)
 ```java
 @Service
 public class CreateUserUseCase { ... }
@@ -114,13 +119,13 @@ public class JpaUserRepository implements UserRepository { ... }
 ## Testing
 
 ```bash
-./gradlew test              # todos
+./gradlew test              # everything
 ./gradlew test --tests "*CreateUser*"
 ```
 
 Stack: JUnit 5 + Mockito + AssertJ
 
-Naming: `should_<resultado>_when_<condición>`
+Naming: `should_<result>_when_<condition>`
 
 ```java
 @Test
@@ -133,25 +138,25 @@ void should_throw_duplicate_error_when_email_already_exists() {
 }
 ```
 
-- Unit: Mockito para ports, testear use cases aislados
-- Integration: `@SpringBootTest` + Testcontainers para repos
+- Unit: Mockito for ports, test use cases in isolation
+- Integration: `@SpringBootTest` + Testcontainers for repos
 
-## Decisiones de arquitectura comunes en Java
+## Common architecture decisions in Java
 
-Ante estas elecciones, aplicar el protocolo de decisión del CLAUDE.md:
+For these choices, apply the decision protocol from CLAUDE.md:
 - **Framework:** Spring Boot vs Quarkus vs Micronaut vs plain Java
 - **Build:** Gradle (Kotlin DSL) vs Maven
-- **Persistencia:** JPA/Hibernate vs JOOQ vs JDBC puro
-- **REST:** Spring MVC vs Spring WebFlux (reactivo)
-- **Mensajería:** Kafka vs RabbitMQ vs SQS
-- **Tests de integración:** Testcontainers vs H2 en memoria
+- **Persistence:** JPA/Hibernate vs JOOQ vs plain JDBC
+- **REST:** Spring MVC vs Spring WebFlux (reactive)
+- **Messaging:** Kafka vs RabbitMQ vs SQS
+- **Integration tests:** Testcontainers vs in-memory H2
 
-## Cuándo usar qué
+## When to use what
 
-| Caso | Usar |
+| Case | Use |
 |------|------|
-| Value object inmutable | `record` |
-| Entidad con estado mutable | `class` con constructor privado |
-| Resultado que puede fallar | `Optional<T>` o excepción de dominio |
-| Config tipada | `@ConfigurationProperties` |
-| DTO de API | `record` con anotaciones Jackson |
+| Immutable value object | `record` |
+| Entity with mutable state | `class` with a private constructor |
+| Result that can fail | `Optional<T>` or a domain exception |
+| Typed config | `@ConfigurationProperties` |
+| API DTO | `record` with Jackson annotations |
