@@ -55,7 +55,7 @@ ENTRYPOINT ["/server"]
 ### Node / TypeScript
 ```dockerfile
 # Stage 1: build
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --include=dev
@@ -63,7 +63,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: runtime
-FROM node:20-alpine
+FROM node:22-alpine
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && addgroup -S appgroup && adduser -S appuser -G appgroup
@@ -175,7 +175,7 @@ volumes:
 ```yaml
 # CI: scan the image with Trivy
 - name: Scan image
-  uses: aquasecurity/trivy-action@master
+  uses: aquasecurity/trivy-action@v0.36.0
   with:
     image-ref: app:${{ github.sha }}
     severity: CRITICAL,HIGH
@@ -197,7 +197,7 @@ volumes:
 
 ## Common Docker decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Base image:** distroless vs alpine vs slim vs scratch
 - **Orchestration:** Docker Compose vs ECS vs Kubernetes
 - **Registry:** ECR vs GHCR vs Docker Hub

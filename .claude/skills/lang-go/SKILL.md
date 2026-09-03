@@ -221,7 +221,7 @@ go func() {
 
 ## Common Go decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **HTTP framework:** stdlib + Chi vs Gin vs Echo vs Fiber
 - **ORM:** GORM vs sqlc vs pgx raw
 - **DI:** manual (preferred) vs Wire

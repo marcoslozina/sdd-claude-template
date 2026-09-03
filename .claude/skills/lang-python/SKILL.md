@@ -143,7 +143,7 @@ mypy src/               # types
 
 ## Common architecture decisions in Python
 
-For these choices, apply the decision protocol from CLAUDE.md:
+For these choices, apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md):
 - **ORM:** SQLAlchemy vs SQLModel vs raw queries
 - **HTTP:** FastAPI vs Flask vs aiohttp
 - **Async:** native asyncio vs blocking sync

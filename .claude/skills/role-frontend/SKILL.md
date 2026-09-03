@@ -127,7 +127,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'))
 
 ## Common Frontend architecture decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Global state:** Zustand vs Redux Toolkit vs Context API
 - **Data fetching:** TanStack Query vs SWR vs manual fetch
 - **Routing:** React Router vs TanStack Router

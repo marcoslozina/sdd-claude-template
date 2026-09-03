@@ -138,7 +138,11 @@ class Order:  # Aggregate Root
         self.items.append(item)
 
     def total(self) -> Money:
-        return sum(item.subtotal() for item in self.items)
+        # plain sum() seeds the accumulator with int 0, which Money.add() rejects —
+        # reduce over Money.add() instead, seeded with the first subtotal
+        from functools import reduce
+        subtotals = [item.subtotal() for item in self.items]
+        return reduce(lambda acc, s: acc.add(s), subtotals[1:], subtotals[0])
 ```
 
 **Aggregate rules:**

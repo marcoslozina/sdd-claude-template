@@ -129,7 +129,8 @@ Do not make up answers or use outside knowledge.""",
 ### Summary Indexing
 Index summaries and full chunks separately.
 Search over the summaries, return the full chunk.
-**Improves MRR by up to +17.6% according to official Anthropic benchmarks.**
+This narrows the search space before ranking, which tends to help precision on large
+corpora — measure it on your own data rather than assuming a fixed improvement number.
 
 ### Contextual Embeddings
 Use Claude to generate situational context before embedding each chunk:
@@ -188,11 +189,16 @@ def precision_recall(retrieved: list[str], relevant: set[str]) -> tuple[float, f
     return hits / len(retrieved), hits / len(relevant)
 ```
 
-**Baseline → optimized (official Anthropic benchmarks):**
-- Precision: 0.43 → 0.44 (+2.3%)
-- Recall: 0.66 → 0.69 (+4.5%)
-- MRR: 0.74 → 0.87 (+17.6%)
-- End-to-end accuracy: 71% → 81% (+10%)
+**What Anthropic actually published (Contextual Retrieval, Sept 2024 — measured as
+top-20-chunk retrieval failure rate, not precision/recall/MRR — treat the numbers
+above as your own metrics to compute, not as this benchmark's):**
+- Baseline (embeddings only): 5.7% failure rate
+- + Contextual Embeddings: 3.7% (-35% relative)
+- + Contextual Embeddings + Contextual BM25: 2.9% (-49% relative)
+- + Contextual Embeddings + Contextual BM25 + Reranking: 1.9% (-67% relative)
+
+Numbers depend heavily on your corpus and query distribution — re-run this kind of
+evaluation on your own data before trusting any published figure, including this one.
 
 ---
 
@@ -227,7 +233,7 @@ system = [
 
 ## Common RAG decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Vector DB:** Pinecone vs Weaviate vs Chroma vs pgvector
 - **Embedding model:** Voyage AI vs OpenAI Ada vs Cohere
 - **Chunk strategy:** fixed vs semantic vs by document structure

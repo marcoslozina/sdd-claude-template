@@ -143,7 +143,7 @@ void should_throw_duplicate_error_when_email_already_exists() {
 
 ## Common architecture decisions in Java
 
-For these choices, apply the decision protocol from CLAUDE.md:
+For these choices, apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md):
 - **Framework:** Spring Boot vs Quarkus vs Micronaut vs plain Java
 - **Build:** Gradle (Kotlin DSL) vs Maven
 - **Persistence:** JPA/Hibernate vs JOOQ vs plain JDBC

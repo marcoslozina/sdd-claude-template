@@ -178,7 +178,7 @@ CMD [".venv/bin/python", "-m", "app"]
 
 ## Common architecture decisions in CI/CD
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **CI platform:** GitHub Actions vs GitLab CI vs CircleCI vs Jenkins
 - **Deploy strategy:** Blue/Green vs Canary vs Rolling
 - **Container registry:** ECR vs GCR vs Docker Hub vs GitHub Packages

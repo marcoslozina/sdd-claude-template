@@ -207,5 +207,5 @@ aria-required="true"           <!-- required field -->
 ### In CI (GitHub Actions)
 ```yaml
 - name: Accessibility audit
-  run: npx axe-cli http://localhost:3000 --exit
+  run: npx @axe-core/cli http://localhost:3000 --exit
 ```

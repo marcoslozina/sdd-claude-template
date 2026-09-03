@@ -162,7 +162,7 @@ S3 (raw) → Lambda (trigger) → SQS → Lambda (process) → S3 (processed)
 
 ## Common architecture decisions on AWS
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Compute:** Lambda vs ECS Fargate vs EC2
 - **DB:** DynamoDB vs RDS vs Aurora Serverless
 - **API:** API Gateway vs ALB vs App Runner

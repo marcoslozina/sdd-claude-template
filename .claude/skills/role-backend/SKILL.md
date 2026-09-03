@@ -156,7 +156,7 @@ Never let infrastructure exceptions (SQL, HTTP, timeout) reach the client untran
 
 ## Common Backend decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **API style:** REST vs GraphQL vs gRPC vs tRPC
 - **Auth:** JWT vs sessions vs OAuth2
 - **Pagination:** cursor vs offset

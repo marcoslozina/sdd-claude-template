@@ -9,7 +9,7 @@ description: Ethical product design - avoiding dark patterns, transparent and no
 
 Design is an act with consequences. Every decision — what to show, what to hide, what to make easy, what to make hard — affects user behavior. Responsible design means making those decisions aware of their impact.
 
-Core references: [Anthropic Model Spec — Avoiding Manipulation](https://www.anthropic.com/research/model-spec) and [Nielsen Norman Group — Dark Patterns](https://www.nngroup.com/articles/dark-patterns/).
+Core references: [Anthropic Model Spec — Avoiding Manipulation](https://www.anthropic.com/research/model-spec) and [Nielsen Norman Group — Deceptive Patterns](https://www.nngroup.com/articles/deceptive-patterns/).
 
 ---
 

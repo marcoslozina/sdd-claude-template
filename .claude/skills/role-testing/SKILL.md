@@ -169,7 +169,7 @@ Every name should read as documentation. If it isn't clear, the test does too mu
 
 ## Common decisions in Testing
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Fakes vs Mocks:** for each domain port
 - **Testcontainers vs embedded DB:** for database adapters
 - **Coverage threshold:** what minimum % to enforce in CI

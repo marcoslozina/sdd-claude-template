@@ -235,7 +235,7 @@ async def readiness():
 
 ## Common Observability decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Stack:** OpenTelemetry + Grafana/Prometheus vs Datadog vs CloudWatch
 - **Log aggregation:** ELK (Elasticsearch) vs Loki vs CloudWatch Logs
 - **Alerting:** PagerDuty vs OpsGenie vs AlertManager

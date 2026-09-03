@@ -206,7 +206,7 @@ def upgrade():
 
 ## Common Multi-Environment decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Feature flags:** homebrew vs LaunchDarkly vs GrowthBook vs Unleash
 - **Config management:** env vars vs AWS Parameter Store vs Vault
 - **Staging data:** anonymization vs synthetic data vs a subset of prod

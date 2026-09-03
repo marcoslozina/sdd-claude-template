@@ -182,7 +182,7 @@ describe('CreateUserUseCase', () => {
 
 ## Common architecture decisions in TypeScript
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Runtime:** Node.js vs Bun vs Deno
 - **HTTP framework:** Fastify vs Express vs Hono
 - **ORM/Query:** Prisma vs Drizzle vs Kysely vs raw SQL

@@ -197,7 +197,7 @@ def predict_with_logging(text: str, model_version: str) -> dict:
 
 ## Common ML Engineering decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Build vs Buy:** train your own model vs LLM + prompting vs third-party API
 - **Feature store:** Feast vs Tecton vs custom on Redis
 - **Experiment tracking:** MLflow vs W&B vs Comet

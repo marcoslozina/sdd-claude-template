@@ -192,13 +192,13 @@ performance:
   needs: integration-tests
   if: github.ref == 'refs/heads/main'
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Start app
       run: docker compose up -d
     - name: Run k6 baseline
-      uses: grafana/k6-action@v0.3.1
+      uses: grafana/run-k6-action@v1
       with:
-        filename: tests/performance/baseline.js
+        path: tests/performance/baseline.js
     - name: Assert thresholds
       run: |
         # Fail the pipeline if the SLOs aren't met
@@ -213,18 +213,16 @@ performance:
 - [ ] Load test at the expected load meets the SLOs
 - [ ] Stress test identifies the breaking point (how much can it take?)
 - [ ] No memory leaks in a 30-minute soak test
-- [ ] DB queries have had EXPLAIN ANALYZE reviewed
-- [ ] Indexes created for the production access patterns
-- [ ] Connection pool sized for the expected load
 - [ ] Auto-scaling configured with the right metrics
+
+DB indexing, query tuning, connection pooling and caching strategy are code-level
+concerns — see `role-app-performance` for those.
 
 ---
 
 ## Common Performance decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Tool:** k6 vs Locust vs Gatling vs JMeter
 - **Where to run:** local vs CI vs a dedicated environment
 - **SLOs:** define p95 and p99 per operation type
-- **Caching:** what to cache, TTL, invalidation strategy
-- **DB indexes:** which ones to create based on the real access patterns

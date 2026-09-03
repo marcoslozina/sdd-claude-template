@@ -224,7 +224,7 @@ Orchestrator:
 
 ## Agent architecture decisions
 
-Apply the decision protocol from CLAUDE.md when facing:
+Apply the decision protocol (this project's CLAUDE.md if it defines one, otherwise dev-harness's docs/DECISION_PROTOCOL.md) when facing:
 - **Sync vs async:** do I need the result before continuing?
 - **Task granularity:** very small tasks = agent overhead; very large ones = not parallelizable
 - **What to save in Engram:** decisions, bugs, discoveries — not ephemeral state
